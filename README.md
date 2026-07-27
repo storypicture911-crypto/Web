@@ -1,104 +1,47 @@
-# Shin Htate Htar Author Studio
+# Shin Htate Htar Author Studio v4
 
-Responsive author website + protected Supabase admin dashboard.
+GitHub Pages + Supabase အတွက် ပြင်ဆင်ထားသော စာရေးဆရာမ Website နှင့် Hidden Admin Dashboard ဖြစ်ပါတယ်။
 
-## Update တွေ
+## Live URLs
 
-- Public website မှာ Admin link လုံးဝမပြပါ
-- Intro image နဲ့ About Author image သီးခြား
-- Facebook, TikTok, Instagram, Telegram, Email SVG logos
-- Bookshelf UI + price / currency / FREE badge
-- FREE စာအုပ်ကို blog-style reader နဲ့ website မှာတန်းဖတ်နိုင်
-- PDF ကို Supabase Storage သို့ upload ပြီး website modal ထဲ iframe နဲ့ဖတ်နိုင်
-- Latest blog မှာ red `NEWEST` tag
-- Blog date အပြင် `ယနေ့`, `ယခုတစ်ပတ်`, `ယခုလ` label
-- Admin မှ Books / Blogs / Quotes / Site settings ကို CRUD လုပ်နိုင်
-- Delete မလုပ်ခင် title အတိအကျရိုက်ရတဲ့ confirmation
-- Visitor analytics: total visits, unique visitors, today, active now, subscribers, popular books/blogs
-- Email subscribe + Browser Notification opt-in
-- Supabase Realtime နဲ့ published blog update ကို website ဖွင့်ထားတဲ့ subscribers ထံ notification ပြ
-- Phone / tablet / laptop responsive
-
-## Supabase configuration
-
-`config.js` မှာ user ပေးထားတဲ့ Project URL နဲ့ publishable key ဖြည့်ပြီးသားဖြစ်ပါတယ်။ Publishable key ကို browser မှာသုံးနိုင်ပေမယ့် `schema.sql` ထဲက RLS policies က မဖြစ်မနေလိုပါတယ်။ Secret/service-role key မထည့်ပါနဲ့။
-
-### 1. Database + Storage setup
-
-1. Supabase Dashboard ကိုဖွင့်ပါ
-2. **SQL Editor → New query**
-3. `schema.sql` အားလုံး copy/paste လုပ်ပြီး **Run**
-4. Table Editor မှာ `books`, `posts`, `quotes`, `page_views` စတာတွေ ပေါ်လာရပါမယ်
-5. Storage မှာ `site-assets` bucket ပေါ်လာရပါမယ်
-
-`schema.sql` ကို နောက်တစ်ကြိမ် run လုပ်လည်း columns/policies ကို update လုပ်နိုင်အောင်ရေးထားပါတယ်။
-
-### 2. Admin login account
-
-Project URL + publishable key တင်နဲ့ admin login account အလိုအလျောက်မဖြစ်ပါ။
-
-1. Supabase Dashboard → **Authentication → Users**
-2. **Add user**
-3. Admin email နဲ့ password ဖန်တီးပါ
-4. Website ရဲ့ `/admin.html` မှာ အဲဒီ email/password နဲ့ login ဝင်ပါ
-
-Public website မှာ signup link နဲ့ Admin link မရှိပါ။
-
-## GitHub upload
-
-ZIP ကို GitHub repository ထဲတင်ရုံမဟုတ်ဘဲ ZIP ကို computer မှာ Extract လုပ်ပြီး **အထဲက files/folders အားလုံး**ကို repository root မှာ upload လုပ်ပါ။
-
-အနည်းဆုံး ဒီပုံစံဖြစ်ရပါမယ်။
+Public website:
 
 ```text
-index.html
-admin.html
-styles.css
-app.js
-admin.js
-data.js
-config.js
-schema.sql
-sw.js
-.nojekyll
-assets/
+https://storypicture911-crypto.github.io/Web/
 ```
 
-GitHub → Settings → Pages → Deploy from a branch → `main` → `/(root)` → Save.
-
-## Link examples with `shinhtatehtar`
-
-အသုံးပြုသူ `storypicture911-crypto` ကိုမပြောင်းဘဲ repository ကို `shinhtatehtar` လို့ rename လုပ်ရင် example URL က:
+Hidden admin:
 
 ```text
-https://storypicture911-crypto.github.io/shinhtatehtar/
+https://storypicture911-crypto.github.io/Web/admin.html
 ```
 
-ပိုတိုချင်ရင် GitHub username ကို `shinhtatehtar` ပြောင်းပြီး `shinhtatehtar.github.io` repository သုံးတဲ့ user site URL example:
+Public menu မှာ Admin link မပါပါ။
+
+## v4 မှာ ပြင်ထားတာ
+
+- Website က Supabase request ကိုစောင့်နေရင်း အဖြူပဲမပေါ်တော့ပါ။ Preview content ကို ချက်ချင်းပြပြီး Live data ရလာရင် update လုပ်ပါတယ်။
+- Supabase library ကို blocking script အဖြစ်မသုံးတော့ဘဲ background မှာ load လုပ်ပါတယ်။
+- Admin login မှာ connection status နဲ့ error ကို တိုက်ရိုက်ပြပါတယ်။
+- `Supabase Connection စစ်မယ်` ခလုတ် ထည့်ထားပါတယ်။
+- Email/Password မမှန်ခြင်း၊ Email မ confirm ရသေးခြင်း၊ key/network error နဲ့ timeout ကို နားလည်လွယ်အောင်ပြပါတယ်။
+- Old service-worker cache ကို ဖျက်ပြီး JS/CSS အဟောင်းမတက်အောင် version query ထည့်ထားပါတယ်။
+- Favicon 404 error ကို ဖြေရှင်းထားပါတယ်။
+- Bookshelf, price/FREE, online reader, PDF viewer, Blog NEWEST/ယနေ့/ယခုတစ်ပတ်, social icons, analytics နှင့် Realtime notification features များ ဆက်လက်ပါဝင်ပါတယ်။
+
+## Upload
+
+`UPLOAD-STEPS.md` ကိုဖတ်ပြီး repository root မှာ files အားလုံး replace လုပ်ပါ။
+
+## Supabase
+
+`config.js` မှာ Project URL နှင့် browser-safe Publishable Key ထည့်ပြီးသားဖြစ်ပါတယ်။
 
 ```text
-https://shinhtatehtar.github.io/
+Project ref: kebltdheqbisuvzidjdn
+Storage bucket: site-assets
 ```
 
-ကိုယ်ပိုင် domain ဝယ်ထားရင်:
+`schema.sql` ကို Run အောင်မြင်ပြီးသားဆိုရင် ပြန် Run လုပ်စရာမလိုပါ။ Tables/policies မရှိခြင်း သို့မဟုတ် setup ပြန်စစ်လိုခြင်းရှိမှ ပြန် Run ပါ။
 
-```text
-https://shinhtatehtar.com
-```
-
-`CNAME.example` ကို `CNAME` လို့ rename မလုပ်ခင် domain ကိုတကယ်ပိုင်ပြီး DNS ချိတ်ထားရပါမယ်။ အသေးစိတ်ကို `DOMAIN-GUIDE.md` မှာကြည့်ပါ။
-
-## Notification limitation
-
-ဒီ static GitHub Pages version မှာ Browser Notification permission တောင်းပြီး Supabase Realtime က blog publish event ရလာရင် notification ပြပါတယ်။ Website tab/browser ဖွင့်ထားချိန်မှာ အလုပ်လုပ်ပါတယ်။ Browser ပိတ်ထားချိန်ပါ အမြဲတမ်း push ပို့ဖို့ VAPID/Web Push server သို့မဟုတ် Supabase Edge Function တစ်ခု ထပ်လိုပါတယ်။ Email subscription ကို database ထဲသိမ်းထားပေမယ့် email အလိုအလျောက်ပို့ရန်လည်း Edge Function/email provider ချိတ်ရပါမယ်။
-
-## PDF and images
-
-Admin မှ upload လုပ်တဲ့ cover, blog image, author images နဲ့ PDF တွေဟာ `site-assets` public bucket ထဲဝင်ပါတယ်။ `schema.sql` မှာ image/PDF file types နဲ့ 50MB limit သတ်မှတ်ထားပါတယ်။
-
-## Security notes
-
-- Public website မှာ publishable key ပါတာ ပုံမှန်ပါ
-- RLS policies မ run ရင် data မလုံခြုံနိုင်သလို data မဖတ်နိုင်တာလည်းဖြစ်နိုင်ပါတယ်
-- Secret key / service-role key ကို `config.js`, GitHub, screenshot သို့ chat မှာ မပေးပါနဲ့
-- Admin page URL သိရုံနဲ့ edit မလုပ်နိုင်ပါ; Supabase Auth login လိုပါတယ်
+> `service_role` သို့မဟုတ် Supabase Secret Key ကို GitHub မှာ မထည့်ပါနဲ့။

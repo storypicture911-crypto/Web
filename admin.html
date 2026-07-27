@@ -6,7 +6,8 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="theme-color" content="#223f36">
   <title>Author Studio Admin</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 rx=%2218%22 fill=%22%236d2837%22/><text x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22white%22 font-family=%22Georgia%22>H</text></svg>">
+  <link rel="stylesheet" href="styles.css?v=4.0.0">
 </head>
 <body class="admin-body">
   <section class="login-screen" id="loginScreen">
@@ -15,11 +16,17 @@
       <h1>Author Studio Admin</h1>
       <p>ဒီစာမျက်နှာ link ကို website menu မှာမပြထားပါ။ Login အောင်မြင်မှ စာအုပ်၊ Blog၊ PDF နဲ့ Website settings ကို ပြင်နိုင်ပါတယ်။</p>
       <form class="login-form" id="loginForm">
-        <div class="field" id="emailField"><label for="loginEmail">Admin email</label><input id="loginEmail" type="email" autocomplete="username" placeholder="admin@example.com"></div>
+        <div class="field" id="emailField"><label for="loginEmail">Admin email</label><input id="loginEmail" type="email" autocomplete="username" placeholder="admin@example.com" required></div>
         <div class="field"><label for="loginPassword" id="passwordLabel">Password</label><input id="loginPassword" type="password" autocomplete="current-password" required></div>
-        <button class="btn btn-primary" type="submit">Login ဝင်မယ်</button>
+        <button class="btn btn-primary" id="loginButton" type="submit" disabled>Login ဝင်မယ်</button>
       </form>
+      <div class="login-status loading" id="loginStatus" role="status" aria-live="polite">Admin system စတင်နေပါတယ်…</div>
+      <div class="login-tools">
+        <button class="btn btn-secondary btn-small" id="testConnectionButton" type="button">Supabase Connection စစ်မယ်</button>
+        <span id="projectRefText">Project စစ်နေသည်…</span>
+      </div>
       <div class="login-help" id="loginHelp">Supabase Dashboard → Authentication → Users မှာ admin user တစ်ယောက် အရင်ဖန်တီးပါ။</div>
+      <small class="app-version">Author Studio v4.0.0</small>
     </div>
   </section>
 
@@ -129,9 +136,8 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
-  <script src="data.js"></script>
-  <script src="admin.js"></script>
+  <script src="config.js?v=4.0.0"></script>
+  <script src="data.js?v=4.0.0"></script>
+  <script src="admin.js?v=4.0.0"></script>
 </body>
 </html>

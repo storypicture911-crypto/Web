@@ -365,3 +365,52 @@ img { display:block; max-width:100%; }
   *,*::before,*::after { scroll-behavior:auto!important; animation:none!important; transition:none!important; }
   .reveal { opacity:1; transform:none; }
 }
+
+
+/* v4 connection and error feedback */
+.login-status {
+  margin-top: 14px;
+  border-radius: 12px;
+  padding: 11px 13px;
+  font-size: .9rem;
+  line-height: 1.55;
+  border: 1px solid transparent;
+}
+.login-status.loading,
+.login-status.info {
+  color: #4c4a43;
+  background: #f4f0e7;
+  border-color: #ded6c5;
+}
+.login-status.success {
+  color: #185a3a;
+  background: #e7f6ed;
+  border-color: #b9dfc8;
+}
+.login-status.error {
+  color: #8d2435;
+  background: #fff0f1;
+  border-color: #efc4cb;
+}
+.login-tools {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  color: #746f65;
+  font-size: .78rem;
+}
+.app-version {
+  display: block;
+  margin-top: 12px;
+  color: #969087;
+  text-align: center;
+}
+.noscript-message {
+  padding: 18px;
+  background: #fff0f1;
+  color: #8d2435;
+  text-align: center;
+  font-weight: 700;
+}

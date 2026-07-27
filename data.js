@@ -1,9 +1,30 @@
 (() => {
-  const STORAGE_KEY = "shinhtatehtar-author-studio-v3";
+  const STORAGE_KEY = "shinhtatehtar-author-studio-v4";
   const ANALYTICS_KEY = "shinhtatehtar-local-analytics-v1";
   const cfg = window.APP_CONFIG || {};
   const deepClone = value => JSON.parse(JSON.stringify(value));
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+
+  const DEFAULT_TIMEOUT = Number(cfg.REQUEST_TIMEOUT_MS || 12000);
+
+  function withTimeout(value, timeoutMs = DEFAULT_TIMEOUT, label = "Request") {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`${label} timeout — internet connection သို့မဟုတ် Supabase Project URL ကို စစ်ပါ။`)), timeoutMs);
+    });
+    return Promise.race([Promise.resolve(value), timeout]).finally(() => clearTimeout(timer));
+  }
+
+  function friendlyError(error) {
+    const raw = String(error?.message || error || "Unknown error");
+    const lower = raw.toLowerCase();
+    if (lower.includes("invalid login credentials")) return "Email သို့မဟုတ် Password မမှန်ပါ။ Supabase Authentication → Users မှာ သတ်မှတ်ထားတဲ့ password ကိုသုံးပါ။";
+    if (lower.includes("email not confirmed")) return "ဒီ email ကို Confirm မလုပ်ရသေးပါ။ Supabase Authentication → Users မှာ Confirm လုပ်ပါ။";
+    if (lower.includes("failed to fetch") || lower.includes("networkerror") || lower.includes("load failed")) return "Supabase ကို ဆက်သွယ်မရပါ။ Internet၊ Project URL နဲ့ Publishable Key ကိုစစ်ပါ။";
+    if (lower.includes("jwt") || lower.includes("api key") || lower.includes("apikey")) return "Supabase Publishable Key မမှန်နိုင်ပါ။ config.js ကိုစစ်ပါ။";
+    if (lower.includes("timeout")) return raw;
+    return raw;
+  }
 
   const defaultData = {
     settings: {
@@ -123,6 +144,35 @@
 
   let client = null;
   let mode = "local";
+  let libraryPromise = null;
+
+  function loadSupabaseLibrary() {
+    if (window.supabase?.createClient) return Promise.resolve(true);
+    if (libraryPromise) return libraryPromise;
+
+    libraryPromise = new Promise(resolve => {
+      const existing = document.getElementById("supabaseClientLibrary");
+      const script = existing || document.createElement("script");
+      let settled = false;
+      const finish = value => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        if (!value) libraryPromise = null;
+        resolve(value);
+      };
+      const timer = setTimeout(() => finish(Boolean(window.supabase?.createClient)), 8000);
+
+      script.id = "supabaseClientLibrary";
+      script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+      script.async = true;
+      script.crossOrigin = "anonymous";
+      script.onload = () => finish(Boolean(window.supabase?.createClient));
+      script.onerror = () => finish(false);
+      if (!existing) document.head.appendChild(script);
+    });
+    return libraryPromise;
+  }
 
   function localRead() {
     try {
@@ -153,16 +203,45 @@
   async function init() {
     const url = String(cfg.SUPABASE_URL || "").trim();
     const key = String(cfg.SUPABASE_PUBLISHABLE_KEY || cfg.SUPABASE_ANON_KEY || "").trim();
-    if (url && key && window.supabase?.createClient) {
-      client = window.supabase.createClient(url, key, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    const validUrl = /^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(url);
+
+    const libraryReady = validUrl && key ? await loadSupabaseLibrary() : false;
+    if (validUrl && key && libraryReady && window.supabase?.createClient) {
+      client = window.supabase.createClient(url.replace(/\/$/, ""), key, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storageKey: `author-studio-auth-${cfg.SITE_SLUG || "site"}`
+        },
+        global: {
+          headers: { "x-client-info": `shinhtatehtar-author-studio/${cfg.APP_VERSION || "4"}` }
+        }
       });
       mode = "supabase";
     } else {
       mode = "local";
+      client = null;
       localRead();
     }
     return mode;
+  }
+
+  async function testConnection() {
+    if (mode !== "supabase" || !client) {
+      return { ok: false, mode, message: "Supabase client မတက်သေးပါ။ CDN သို့မဟုတ် config.js ကိုစစ်ပါ။" };
+    }
+    try {
+      const result = await withTimeout(
+        client.from("site_settings").select("id").eq("id", 1).maybeSingle(),
+        DEFAULT_TIMEOUT,
+        "Supabase connection"
+      );
+      if (result.error) throw result.error;
+      return { ok: true, mode, message: "Supabase ချိတ်ဆက်မှု အောင်မြင်ပါတယ်။" };
+    } catch (error) {
+      return { ok: false, mode, message: friendlyError(error), error };
+    }
   }
 
   function normalizeSettings(row) {
@@ -176,13 +255,14 @@
     }
 
     try {
-      const [settingsResult, booksResult, postsResult, quotesResult] = await Promise.all([
+      const results = await withTimeout(Promise.all([
         client.from("site_settings").select("*").eq("id", 1).maybeSingle(),
         client.from("books").select("*").order("display_order", { ascending: true }),
         client.from("posts").select("*").eq("status", "published").order("post_date", { ascending: false }).order("created_at", { ascending: false }),
         client.from("quotes").select("*").order("display_order", { ascending: true })
-      ]);
-      for (const result of [settingsResult, booksResult, postsResult, quotesResult]) {
+      ]), DEFAULT_TIMEOUT, "Website data");
+      const [settingsResult, booksResult, postsResult, quotesResult] = results;
+      for (const result of results) {
         if (result.error) throw result.error;
       }
       return {
@@ -194,19 +274,20 @@
       };
     } catch (error) {
       console.warn("Supabase data is not ready; using preview data.", error);
-      return { ...deepClone(defaultData), source: "fallback", loadError: error.message || String(error) };
+      return { ...deepClone(defaultData), source: "fallback", loadError: friendlyError(error) };
     }
   }
 
   async function getAdminData() {
     if (mode === "local") return { ...deepClone(localRead()), source: "local" };
-    const [settingsResult, booksResult, postsResult, quotesResult] = await Promise.all([
+    const results = await withTimeout(Promise.all([
       client.from("site_settings").select("*").eq("id", 1).maybeSingle(),
       client.from("books").select("*").order("display_order", { ascending: true }),
       client.from("posts").select("*").order("post_date", { ascending: false }).order("created_at", { ascending: false }),
       client.from("quotes").select("*").order("display_order", { ascending: true })
-    ]);
-    for (const result of [settingsResult, booksResult, postsResult, quotesResult]) {
+    ]), DEFAULT_TIMEOUT, "Admin data");
+    const [settingsResult, booksResult, postsResult, quotesResult] = results;
+    for (const result of results) {
       if (result.error) throw result.error;
     }
     return {
@@ -220,7 +301,7 @@
 
   async function getSession() {
     if (mode === "local") return { user: { email: "demo@local" } };
-    const { data, error } = await client.auth.getSession();
+    const { data, error } = await withTimeout(client.auth.getSession(), DEFAULT_TIMEOUT, "Session check");
     if (error) throw error;
     return data.session;
   }
@@ -231,8 +312,14 @@
       sessionStorage.setItem("author-demo-admin", "1");
       return { user: { email: "demo@local" } };
     }
-    const { data, error } = await client.auth.signInWithPassword({ email, password: passwordOrPin });
-    if (error) throw error;
+    if (!email) throw new Error("Admin email ထည့်ပါ။");
+    if (!passwordOrPin) throw new Error("Password ထည့်ပါ။");
+    const { data, error } = await withTimeout(
+      client.auth.signInWithPassword({ email, password: passwordOrPin }),
+      DEFAULT_TIMEOUT,
+      "Admin login"
+    );
+    if (error) throw new Error(friendlyError(error));
     return data;
   }
 
@@ -241,8 +328,8 @@
       sessionStorage.removeItem("author-demo-admin");
       return;
     }
-    const { error } = await client.auth.signOut();
-    if (error) throw error;
+    const { error } = await withTimeout(client.auth.signOut(), DEFAULT_TIMEOUT, "Logout");
+    if (error) throw new Error(friendlyError(error));
   }
 
   async function saveSettings(values) {
@@ -391,11 +478,11 @@
     }
     const safeName = file.name.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "file";
     const path = `${folder}/${Date.now()}-${uid()}-${safeName}`;
-    const { error } = await client.storage.from(cfg.STORAGE_BUCKET || "site-assets").upload(path, file, {
+    const { error } = await withTimeout(client.storage.from(cfg.STORAGE_BUCKET || "site-assets").upload(path, file, {
       cacheControl: "3600",
       upsert: false,
       contentType: file.type || undefined
-    });
+    }), Math.max(DEFAULT_TIMEOUT, 60000), "File upload");
     if (error) throw error;
     const { data } = client.storage.from(cfg.STORAGE_BUCKET || "site-assets").getPublicUrl(path);
     return data.publicUrl;
@@ -481,8 +568,8 @@
 
   async function getAnalytics(data) {
     if (mode === "local") return computeLocalAnalytics(data || localRead());
-    const { data: analytics, error } = await client.rpc("get_admin_analytics");
-    if (error) throw error;
+    const { data: analytics, error } = await withTimeout(client.rpc("get_admin_analytics"), DEFAULT_TIMEOUT, "Analytics");
+    if (error) throw new Error(friendlyError(error));
     return analytics || {};
   }
 
@@ -520,6 +607,10 @@
     init,
     getMode: () => mode,
     getClient: () => client,
+    getProjectRef: () => String(cfg.SUPABASE_URL || "").replace(/^https:\/\//, "").split(".")[0],
+    testConnection,
+    friendlyError,
+    withTimeout,
     getPublicData,
     getAdminData,
     getSession,

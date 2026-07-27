@@ -322,11 +322,34 @@
     }
   }
 
+  function renderImmediatePreview() {
+    try {
+      currentData = JSON.parse(JSON.stringify(AuthorStore.defaults));
+      renderSettings(currentData.settings);
+      renderBooks(currentData.books || []);
+      renderQuotes(currentData.quotes || []);
+      renderPosts(currentData.posts || []);
+      activateReveal();
+    } catch (error) {
+      console.error("Immediate preview render failed", error);
+      document.querySelectorAll(".reveal").forEach(el => el.classList.add("visible"));
+    }
+  }
+
   async function start() {
-    await AuthorStore.init();
-    await loadSite();
-    AuthorStore.trackVisit(sessionId, location.pathname, document.referrer);
-    setInterval(() => AuthorStore.heartbeat(sessionId, location.pathname), 60000);
+    // Never leave the public page blank while a network request is pending.
+    renderImmediatePreview();
+
+    try {
+      await AuthorStore.init();
+      await loadSite();
+    } catch (error) {
+      console.error("Site startup failed", error);
+      showToast(AuthorStore.friendlyError?.(error) || "Live data မဖတ်နိုင်သေးပါ။ Preview data ကိုပြထားပါတယ်။", true);
+    }
+
+    AuthorStore.trackVisit(sessionId, location.pathname, document.referrer).catch(error => console.warn("Visit tracking failed", error));
+    setInterval(() => AuthorStore.heartbeat(sessionId, location.pathname).catch(error => console.warn("Heartbeat failed", error)), 60000);
     registerServiceWorker();
     updateNotificationButton();
     stopRealtime = AuthorStore.subscribeToPublishedPosts(async post => {
@@ -336,28 +359,38 @@
     });
   }
 
-  $("#menuToggle").addEventListener("click", () => {
-    const nav = $("#siteNav");
-    nav.classList.toggle("open");
-    $("#menuToggle").setAttribute("aria-expanded", nav.classList.contains("open"));
-  });
-  document.querySelectorAll("#siteNav a").forEach(a => a.addEventListener("click", () => $("#siteNav").classList.remove("open")));
-  document.querySelectorAll("[data-close-modal]").forEach(el => el.addEventListener("click", closeModal));
-  document.addEventListener("keydown", event => { if (event.key === "Escape") closeModal(); });
-  $("#notificationButton").addEventListener("click", enableNotifications);
-  $("#newsletterForm").addEventListener("submit", async event => {
-    event.preventDefault();
-    const input = $("#newsletterEmail");
-    try {
-      await AuthorStore.subscribeReader(input.value.trim(), getDeviceId(), ("Notification" in window ? Notification.permission : "unsupported"));
-      showToast("Email စာရင်းသွင်းပြီးပါပြီ။");
-      event.currentTarget.reset();
-    } catch (error) {
-      showToast(error.message || "Subscribe လုပ်မရပါ။", true);
-    }
-  });
-  window.addEventListener("author-data-changed", () => loadSite({ quiet: true }));
-  window.addEventListener("beforeunload", () => stopRealtime());
-  $("#year").textContent = new Date().getFullYear();
-  start();
+  function bindPublicEvents() {
+    $("#menuToggle")?.addEventListener("click", () => {
+      const nav = $("#siteNav");
+      if (!nav) return;
+      nav.classList.toggle("open");
+      $("#menuToggle")?.setAttribute("aria-expanded", nav.classList.contains("open"));
+    });
+    document.querySelectorAll("#siteNav a").forEach(a => a.addEventListener("click", () => $("#siteNav")?.classList.remove("open")));
+    document.querySelectorAll("[data-close-modal]").forEach(el => el.addEventListener("click", closeModal));
+    document.addEventListener("keydown", event => { if (event.key === "Escape") closeModal(); });
+    $("#notificationButton")?.addEventListener("click", enableNotifications);
+    $("#newsletterForm")?.addEventListener("submit", async event => {
+      event.preventDefault();
+      const input = $("#newsletterEmail");
+      try {
+        await AuthorStore.subscribeReader(input?.value.trim(), getDeviceId(), ("Notification" in window ? Notification.permission : "unsupported"));
+        showToast("Email စာရင်းသွင်းပြီးပါပြီ။");
+        event.currentTarget.reset();
+      } catch (error) {
+        showToast(AuthorStore.friendlyError?.(error) || error.message || "Subscribe လုပ်မရပါ။", true);
+      }
+    });
+    window.addEventListener("author-data-changed", () => loadSite({ quiet: true }));
+    window.addEventListener("beforeunload", () => stopRealtime());
+    if ($("#year")) $("#year").textContent = new Date().getFullYear();
+  }
+
+  function boot() {
+    bindPublicEvents();
+    start();
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
+  else boot();
 })();

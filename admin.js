@@ -16,6 +16,18 @@
     showToast.timer = setTimeout(() => toast.className = "toast", 3200);
   }
 
+  function setLoginStatus(message, type = "info") {
+    const box = $("#loginStatus");
+    if (!box) return;
+    box.textContent = message || "";
+    box.className = `login-status ${type}`;
+    box.hidden = !message;
+  }
+
+  function friendly(error) {
+    return AuthorStore?.friendlyError?.(error) || error?.message || String(error || "Unknown error");
+  }
+
   function formatPrice(book) {
     if (book.is_free) return "FREE";
     if (book.price == null || book.price === "") return "No price";
@@ -372,54 +384,109 @@
       await reloadData();
     } catch (error) {
       console.error(error);
-      showToast("Admin data မဖတ်နိုင်ပါ။ Supabase မှာ schema.sql run ထားပြီး Auth user ဖန်တီးထားလား စစ်ပါ။", true);
+      showToast(`Login အောင်မြင်ပါတယ်။ ဒါပေမယ့် data မဖတ်နိုင်ပါ — ${friendly(error)}`, true);
       setPage("data");
     }
   }
 
   async function initialize() {
-    appMode = await AuthorStore.init();
-    $("#loginModeBadge").textContent = appMode === "supabase" ? "SUPABASE LIVE MODE" : "LOCAL DEMO MODE";
-    if (appMode === "local") {
-      $("#emailField").hidden = true;
-      $("#passwordLabel").textContent = "Demo PIN";
-      $("#loginHelp").textContent = `Demo PIN: ${(window.APP_CONFIG || {}).DEMO_ADMIN_PIN || "2468"}`;
-    }
+    const loginButton = $("#loginButton");
+    if (loginButton) loginButton.disabled = true;
+    setLoginStatus("Admin system စတင်နေပါတယ်…", "loading");
+
     try {
+      appMode = await AuthorStore.init();
+      $("#loginModeBadge").textContent = appMode === "supabase" ? "SUPABASE LIVE MODE" : "LOCAL DEMO MODE";
+      $("#projectRefText").textContent = appMode === "supabase"
+        ? `Project: ${AuthorStore.getProjectRef()}`
+        : "Supabase CDN/config မရသေးလို့ Demo Mode သုံးနေပါတယ်။";
+
+      if (appMode === "local") {
+        $("#emailField").hidden = true;
+        $("#passwordLabel").textContent = "Demo PIN";
+        $("#loginHelp").textContent = `Demo PIN: ${(window.APP_CONFIG || {}).DEMO_ADMIN_PIN || "2468"}`;
+        setLoginStatus("Local Demo Mode အဆင်သင့်ဖြစ်ပါပြီ။", "success");
+      } else {
+        const check = await AuthorStore.testConnection();
+        setLoginStatus(check.message, check.ok ? "success" : "error");
+      }
+
       const session = await AuthorStore.getSession();
-      if (session || (appMode === "local" && sessionStorage.getItem("author-demo-admin") === "1")) await showAdmin(session);
-    } catch (error) { console.warn(error); }
+      if (session || (appMode === "local" && sessionStorage.getItem("author-demo-admin") === "1")) {
+        await showAdmin(session);
+      }
+    } catch (error) {
+      console.error("Admin initialization failed", error);
+      setLoginStatus(friendly(error), "error");
+    } finally {
+      if (loginButton) loginButton.disabled = false;
+    }
   }
 
   $("#loginForm").addEventListener("submit", async event => {
     event.preventDefault();
-    const button = event.currentTarget.querySelector('[type="submit"]');
+    const button = $("#loginButton") || event.currentTarget.querySelector('[type="submit"]');
+    const email = $("#loginEmail")?.value.trim() || "";
+    const password = $("#loginPassword")?.value || "";
+
+    if (appMode === "supabase" && !email) {
+      setLoginStatus("Admin email ထည့်ပါ။", "error");
+      $("#loginEmail")?.focus();
+      return;
+    }
+    if (!password) {
+      setLoginStatus(appMode === "supabase" ? "Password ထည့်ပါ။" : "Demo PIN ထည့်ပါ။", "error");
+      $("#loginPassword")?.focus();
+      return;
+    }
+
     setBusy(button, true, "Login ဝင်နေသည်…");
+    setLoginStatus("Supabase Authentication ကို စစ်နေပါတယ်…", "loading");
     try {
-      const result = await AuthorStore.signIn($("#loginEmail").value.trim(), $("#loginPassword").value);
+      const result = await AuthorStore.signIn(email, password);
+      setLoginStatus("Login အောင်မြင်ပါတယ်။ Dashboard ဖွင့်နေပါတယ်…", "success");
       await showAdmin(result.session || result);
     } catch (error) {
-      console.error(error);
-      showToast(error.message || "Login မအောင်မြင်ပါ။", true);
-    } finally { setBusy(button, false); }
+      console.error("Admin login failed", error);
+      const message = friendly(error);
+      setLoginStatus(message, "error");
+      showToast(message, true);
+    } finally {
+      setBusy(button, false);
+    }
   });
 
-  $("#logoutButton").addEventListener("click", async () => {
+  $("#testConnectionButton")?.addEventListener("click", async () => {
+    const button = $("#testConnectionButton");
+    setBusy(button, true, "စစ်နေသည်…");
+    setLoginStatus("Supabase connection စစ်နေပါတယ်…", "loading");
+    try {
+      if (!AuthorStore.getClient()) await AuthorStore.init();
+      const result = await AuthorStore.testConnection();
+      setLoginStatus(result.message, result.ok ? "success" : "error");
+    } catch (error) {
+      setLoginStatus(friendly(error), "error");
+    } finally {
+      setBusy(button, false);
+    }
+  });
+
+  $("#logoutButton")?.addEventListener("click", async () => {
     try { await AuthorStore.signOut(); location.reload(); }
     catch (error) { showToast(error.message || "Logout မရပါ။", true); }
   });
   $$('[data-page]').forEach(button => button.addEventListener("click", () => setPage(button.dataset.page)));
-  $("#adminMenuToggle").addEventListener("click", () => $("#adminSidebar").classList.toggle("open"));
-  $("#addBookButton").addEventListener("click", () => openBookEditor());
-  $("#addPostButton").addEventListener("click", () => openPostEditor());
-  $("#addQuoteButton").addEventListener("click", () => openQuoteEditor());
-  $("#settingsForm").addEventListener("submit", saveSettings);
+  $("#adminMenuToggle")?.addEventListener("click", () => $("#adminSidebar").classList.toggle("open"));
+  $("#addBookButton")?.addEventListener("click", () => openBookEditor());
+  $("#addPostButton")?.addEventListener("click", () => openPostEditor());
+  $("#addQuoteButton")?.addEventListener("click", () => openQuoteEditor());
+  $("#settingsForm")?.addEventListener("submit", saveSettings);
   bindPreview("#heroImageUpload", "#heroImagePreview");
   bindPreview("#aboutImageUpload", "#aboutImagePreview");
-  $("#refreshAnalytics").addEventListener("click", loadAnalytics);
+  $("#refreshAnalytics")?.addEventListener("click", loadAnalytics);
   $$('[data-close-drawer]').forEach(el => el.addEventListener("click", closeDrawer));
   document.addEventListener("keydown", event => { if (event.key === "Escape") closeDrawer(); });
-  $("#exportButton").addEventListener("click", () => {
+  $("#exportButton")?.addEventListener("click", () => {
     if (appMode !== "local") return;
     const blob = new Blob([AuthorStore.exportLocal()], { type:"application/json" });
     const link = document.createElement("a");
@@ -428,7 +495,7 @@
     link.click();
     URL.revokeObjectURL(link.href);
   });
-  $("#importFile").addEventListener("change", async event => {
+  $("#importFile")?.addEventListener("change", async event => {
     const file = event.target.files[0];
     if (!file || appMode !== "local") return;
     try {
@@ -439,5 +506,5 @@
     event.target.value = "";
   });
 
-  initialize();
+  initialize().catch(error => { console.error(error); setLoginStatus(friendly(error), "error"); });
 })();
