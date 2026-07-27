@@ -1,11 +1,12 @@
 /*
-  Optional Supabase configuration.
-  Leave both values empty to use instant browser-only Demo Mode.
-  For shared online data, create a Supabase project, run schema.sql,
-  then paste the Project URL and anon public key below.
+  Browser-safe Supabase configuration.
+  The publishable key is designed for client-side use, but database security
+  still depends on the Row Level Security policies in schema.sql.
 */
-window.APP_CONFIG = {
-  SUPABASE_URL: "",
-  SUPABASE_ANON_KEY: "",
-  DEMO_ADMIN_PIN: "2468"
-};
+window.APP_CONFIG = Object.freeze({
+  SUPABASE_URL: "https://kebltdheqbisuvzidjdn.supabase.co",
+  SUPABASE_PUBLISHABLE_KEY: "sb_publishable_Zg8mGuF3CeV1c5xGHKFSTA_jzDusoSR",
+  STORAGE_BUCKET: "site-assets",
+  DEMO_ADMIN_PIN: "2468",
+  SITE_SLUG: "shinhtatehtar"
+});

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900">
+  <defs><linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#eee2d1"/><stop offset="1" stop-color="#b7c4b9"/></linearGradient></defs>
+  <rect width="900" height="900" rx="38" fill="url(#paper)"/>
+  <rect x="55" y="55" width="790" height="790" rx="30" fill="#fffaf0" opacity=".48" stroke="#6f4c3d" stroke-opacity=".25"/>
+  <path d="M140 720 C230 570 370 530 455 560 C620 520 760 625 805 790 H110Z" fill="#2f5147"/>
+  <ellipse cx="460" cy="385" rx="150" ry="190" fill="#e7ba98"/>
+  <path d="M315 390 C250 220 350 145 455 145 C600 145 655 275 600 455 C555 340 535 245 445 225 C365 265 345 350 315 390Z" fill="#2a201e"/>
+  <path d="M320 360 C240 430 250 620 390 675 C330 560 350 450 385 345Z" fill="#2a201e"/>
+  <path d="M585 350 C675 450 650 635 520 680 C585 560 555 445 520 355Z" fill="#2a201e"/>
+  <ellipse cx="400" cy="395" rx="16" ry="10" fill="#392724"/><ellipse cx="515" cy="395" rx="16" ry="10" fill="#392724"/>
+  <path d="M420 495 Q460 520 500 490" fill="none" stroke="#9d5654" stroke-width="9" stroke-linecap="round"/>
+  <g transform="translate(655 150) rotate(10)"><rect width="120" height="170" rx="8" fill="#7a3542"/><rect x="12" y="18" width="96" height="130" rx="4" fill="#f2dfbd"/><path d="M36 58h48M36 80h48M36 102h32" stroke="#7a3542" stroke-width="6" stroke-linecap="round"/></g>
+  <path d="M125 160 C170 115 210 118 240 155 C195 154 165 178 142 220Z" fill="#7b927f"/>
+  <path d="M150 185 C115 210 105 255 120 300" fill="none" stroke="#526c5d" stroke-width="10"/>
+  <text x="110" y="815" font-family="Georgia,serif" font-size="34" fill="#5d4136">About the author</text>
+</svg>

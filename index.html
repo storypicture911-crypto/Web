@@ -2,8 +2,12 @@
 <html lang="my">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="စာရေးဆရာမ၏ စာအုပ်များ၊ Quotes များနှင့် နေ့စဉ်ဘလော့ဂ်များကို ဖတ်ရှုနိုင်သော စာပေအိမ်။">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="စာရေးဆရာမ၏ စာအုပ်များ၊ အခမဲ့ဖတ်ရှုနိုင်သည့်စာများ၊ PDF များ၊ Quotes နှင့် Blog များ။">
+  <meta property="og:title" content="Her Story Studio">
+  <meta property="og:description" content="Books, journal and quiet words from a writer's desk.">
+  <meta property="og:image" content="assets/og-cover.svg">
+  <meta name="theme-color" content="#6d2837">
   <title>Her Story Studio</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -12,16 +16,15 @@
     <div class="container header-inner">
       <a class="brand" href="#home" aria-label="Home">
         <span class="brand-mark">H</span>
-        <span class="brand-copy"><span id="brandAuthor">အိမ့်ချမ်းမြေ့</span><small>Writer · Books · Journal</small></span>
+        <span class="brand-copy"><strong id="brandAuthor">စာရေးဆရာမ</strong><small>Writer · Books · Journal</small></span>
       </a>
-      <button class="menu-toggle" id="menuToggle" aria-label="Menu" aria-expanded="false">☰</button>
-      <nav class="site-nav" id="siteNav">
+      <button class="menu-toggle" id="menuToggle" aria-controls="siteNav" aria-expanded="false" aria-label="Menu">☰</button>
+      <nav class="site-nav" id="siteNav" aria-label="Main navigation">
         <a href="#home">ပင်မ</a>
         <a href="#about">စာရေးသူ</a>
         <a href="#books">စာအုပ်စင်</a>
         <a href="#quotes">Quotes</a>
-        <a href="#journal">နေ့စဉ်ဘလော့ဂ်</a>
-        <a class="nav-admin" href="admin.html">Admin</a>
+        <a href="#journal">Blog</a>
       </nav>
     </div>
   </header>
@@ -32,41 +35,36 @@
         <div class="hero-copy reveal">
           <p class="eyebrow">စာအုပ် · စာရေးခြင်း · နေ့စဉ်မှတ်တမ်း</p>
           <h1>စကားလုံးလေးတွေနဲ့ <em>စိတ်ကူးကမ္ဘာ</em> တစ်ခု တည်ဆောက်သူ</h1>
-          <p class="hero-lead" id="heroTagline">စကားလုံးတွေက လူတစ်ယောက်ရဲ့ နေ့ရက်ကို ပြောင်းလဲပေးနိုင်တယ်။</p>
+          <p class="hero-lead" id="heroTagline"></p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="#books">စာအုပ်စင်ကြည့်မယ် <span>→</span></a>
             <a class="btn btn-secondary" href="#journal">နောက်ဆုံးဘလော့ဂ်</a>
           </div>
-          <div class="signature"><span class="signature-line"></span><span id="heroAuthorRole">စာရေးဆရာမ · ကဗျာဆရာမ</span></div>
+          <div class="signature"><span class="signature-line"></span><span id="heroAuthorRole"></span></div>
         </div>
         <div class="hero-visual reveal">
           <span class="floating-leaf leaf-1"></span><span class="floating-leaf leaf-2"></span>
           <div class="hero-stamp">READ<br>WRITE<br>REMEMBER</div>
-          <div class="portrait-frame"><img id="heroPortrait" src="assets/author-portrait.svg" alt="စာရေးဆရာမပုံ"></div>
-          <div class="hero-quote"><p id="heroQuote">စာအုပ်တစ်အုပ်ဆိုတာ ကိုယ်မသွားဖူးသေးတဲ့ နေရာတစ်ခုရဲ့ တံခါးပါ။</p></div>
+          <div class="portrait-frame"><img id="heroPortrait" src="assets/author-hero.svg" alt="စာရေးဆရာမ၏ intro ပုံ"></div>
+          <div class="hero-quote"><p id="heroQuote"></p></div>
         </div>
       </div>
     </section>
 
-    <div class="marquee" aria-hidden="true">
-      <div class="marquee-track">
-        <span>Stories that stay</span><span>Books & journals</span><span>Words for quiet days</span><span>စာအုပ်နဲ့ဘဝ</span><span>Daily writing notes</span><span>Stories that stay</span><span>Books & journals</span><span>Words for quiet days</span><span>စာအုပ်နဲ့ဘဝ</span><span>Daily writing notes</span>
-      </div>
-    </div>
+    <div class="marquee" aria-hidden="true"><div class="marquee-track">
+      <span>Stories that stay</span><span>Books & journals</span><span>Words for quiet days</span><span>စာအုပ်နဲ့ဘဝ</span><span>Daily writing notes</span>
+      <span>Stories that stay</span><span>Books & journals</span><span>Words for quiet days</span><span>စာအုပ်နဲ့ဘဝ</span><span>Daily writing notes</span>
+    </div></div>
 
     <section class="section" id="about">
       <div class="container">
         <div class="about-card reveal">
-          <div class="about-art"><img id="aboutPortrait" src="assets/author-portrait.svg" alt="စာရေးဆရာမ၏ ပုံ"></div>
+          <div class="about-art"><img id="aboutPortrait" src="assets/author-about.svg" alt="About Author ပုံ"></div>
           <div class="about-copy">
             <p class="eyebrow">စာရေးသူအကြောင်း</p>
-            <h2 id="aboutAuthorName">အိမ့်ချမ်းမြေ့</h2>
-            <p id="aboutBio">စာအုပ်၊ ကဗျာနဲ့ နေ့စဉ်ဘဝထဲက သေးသေးလေးတွေကို နူးညံ့တဲ့ စကားလုံးတွေနဲ့ ရေးသားသူပါ။</p>
-            <div class="social-row">
-              <a id="instagramLink" href="#">Instagram</a>
-              <a id="facebookLink" href="#">Facebook</a>
-              <a id="emailLink" href="mailto:hello@example.com">Email</a>
-            </div>
+            <h2 id="aboutAuthorName"></h2>
+            <p id="aboutBio"></p>
+            <div class="social-row" id="socialRow" aria-label="Social media links"></div>
           </div>
         </div>
       </div>
@@ -76,7 +74,7 @@
       <div class="container">
         <div class="section-heading reveal">
           <div><p class="eyebrow">စာအုပ်စင်</p><h2 class="section-title">ဖတ်ရှုဖို့ စောင့်နေတဲ့ စာအုပ်များ</h2></div>
-          <p class="section-intro">စာအုပ်အဖုံးကိုနှိပ်ပြီး အကြောင်းအရာ၊ ထုတ်ဝေသည့်နှစ်နှင့် ဝယ်ယူရန်အချက်အလက်တွေ ကြည့်နိုင်ပါတယ်။</p>
+          <p class="section-intro">အဖုံးကိုနှိပ်ပြီး ဈေးနှုန်း၊ FREE စာ၊ PDF နဲ့ ဝယ်ယူရန်အချက်အလက်တွေ ကြည့်နိုင်ပါတယ်။</p>
         </div>
         <div class="bookshelf-wrap reveal"><div class="bookshelf" id="bookshelf"></div></div>
       </div>
@@ -96,34 +94,46 @@
       <div class="container">
         <div class="section-heading reveal">
           <div><p class="eyebrow">နေ့စဉ်ဘလော့ဂ်</p><h2 class="section-title">စာရေးစားပွဲပေါ်က နောက်ဆုံးမှတ်တမ်းများ</h2></div>
-          <p class="section-intro">စာရေးခြင်းနောက်ကွယ်က အတွေးတွေ၊ ဖတ်ထားတဲ့စာအုပ်တွေနဲ့ နေ့စဉ်ဘဝကို မျှဝေထားပါတယ်။</p>
+          <p class="section-intro">နောက်ဆုံးစာမှာ NEWEST tag၊ ရက်စွဲအပြင် ယနေ့/ယခုတစ်ပတ် label ကိုပါ မြင်ရပါမယ်။</p>
         </div>
         <div class="blog-grid" id="blogGrid"></div>
       </div>
     </section>
 
-    <section class="newsletter">
-      <div><h2>စာအသစ်တင်တိုင်း သိချင်ပါသလား?</h2><p>Newsletter demo ဖြစ်ပါတယ်။ သင့် backend service နဲ့ချိတ်ပြီး အမှန်တကယ် email စုနိုင်ပါတယ်။</p></div>
-      <form class="newsletter-form" id="newsletterForm"><label class="sr-only" for="newsletterEmail">Email</label><input id="newsletterEmail" type="email" placeholder="your@email.com" required><button class="btn" type="submit">Subscribe</button></form>
+    <section class="newsletter" aria-labelledby="subscribeTitle">
+      <div>
+        <p class="eyebrow light">စာအသစ်တင်တိုင်း</p>
+        <h2 id="subscribeTitle">Blog အသစ်ကို မလွတ်စေပါနဲ့</h2>
+        <p>Email စာရင်းသွင်းနိုင်သလို Browser Notification ကိုလည်း ဖွင့်ထားနိုင်ပါတယ်။</p>
+      </div>
+      <div class="subscribe-stack">
+        <form class="newsletter-form" id="newsletterForm">
+          <label class="sr-only" for="newsletterEmail">Email</label>
+          <input id="newsletterEmail" type="email" placeholder="your@email.com" autocomplete="email" required>
+          <button class="btn" type="submit">Subscribe</button>
+        </form>
+        <button class="notification-button" id="notificationButton" type="button"><span>🔔</span><span id="notificationButtonText">Notification ဖွင့်မယ်</span></button>
+        <small class="notification-note">Browser notification က website ဖွင့်ထားချိန် Realtime update ရလာရင် အသိပေးပါမယ်။</small>
+      </div>
     </section>
   </main>
 
   <footer class="site-footer">
     <div class="container footer-inner">
-      <div>© <span id="year"></span> <span id="footerAuthor">အိမ့်ချမ်းမြေ့</span>. All stories reserved.</div>
-      <div class="footer-links"><a href="#books">စာအုပ်များ</a><a href="#journal">Blog</a><a href="admin.html">Admin</a></div>
+      <div>© <span id="year"></span> <span id="footerAuthor">စာရေးဆရာမ</span>. All stories reserved.</div>
+      <div class="footer-links"><a href="#books">စာအုပ်များ</a><a href="#journal">Blog</a><a href="#about">Contact</a></div>
     </div>
   </footer>
 
   <div class="modal" id="contentModal" aria-hidden="true">
     <div class="modal-backdrop" data-close-modal></div>
-    <div class="modal-panel" id="modalPanel" role="dialog" aria-modal="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <button class="modal-close" data-close-modal aria-label="Close">×</button>
       <div id="modalContent"></div>
     </div>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>

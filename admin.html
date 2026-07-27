@@ -2,100 +2,101 @@
 <html lang="my">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="robots" content="noindex,nofollow">
-  <title>Admin — Her Story Studio</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#223f36">
+  <title>Author Studio Admin</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="admin-body">
   <section class="login-screen" id="loginScreen">
     <div class="login-card">
-      <a class="brand" href="index.html"><span class="brand-mark">H</span><span class="brand-copy">Her Story Studio<small>Content Management</small></span></a>
-      <h1>Admin ဝင်ရောက်ရန်</h1>
-      <p>စာအုပ်၊ နေ့စဉ်ဘလော့ဂ်၊ Quotes နဲ့ စာရေးသူအချက်အလက်တွေကို ဒီနေရာက စီမံနိုင်ပါတယ်။</p>
-      <span class="mode-badge" id="loginModeBadge"><span class="mode-dot"></span><span>Checking mode...</span></span>
-      <form class="form-stack" id="loginForm">
-        <div id="supabaseLoginFields" hidden>
-          <div class="field"><label for="adminEmail">Admin email</label><input id="adminEmail" type="email" autocomplete="username"></div>
-          <div class="field" style="margin-top:16px"><label for="adminPassword">Password</label><input id="adminPassword" type="password" autocomplete="current-password"></div>
-        </div>
-        <div id="demoLoginFields" hidden>
-          <div class="field"><label for="adminPin">Demo PIN</label><input id="adminPin" type="password" inputmode="numeric" placeholder="2468" autocomplete="current-password"><p class="help-text">Preview အတွက် default PIN: <strong>2468</strong></p></div>
-        </div>
-        <button class="btn btn-primary" type="submit">Admin Dashboard ဝင်မယ်</button>
+      <span class="mode-badge" id="loginModeBadge">Connecting…</span>
+      <h1>Author Studio Admin</h1>
+      <p>ဒီစာမျက်နှာ link ကို website menu မှာမပြထားပါ။ Login အောင်မြင်မှ စာအုပ်၊ Blog၊ PDF နဲ့ Website settings ကို ပြင်နိုင်ပါတယ်။</p>
+      <form class="login-form" id="loginForm">
+        <div class="field" id="emailField"><label for="loginEmail">Admin email</label><input id="loginEmail" type="email" autocomplete="username" placeholder="admin@example.com"></div>
+        <div class="field"><label for="loginPassword" id="passwordLabel">Password</label><input id="loginPassword" type="password" autocomplete="current-password" required></div>
+        <button class="btn btn-primary" type="submit">Login ဝင်မယ်</button>
       </form>
-      <p class="help-text" style="margin-top:18px"><a href="index.html">← Public website သို့ ပြန်သွားရန်</a></p>
+      <div class="login-help" id="loginHelp">Supabase Dashboard → Authentication → Users မှာ admin user တစ်ယောက် အရင်ဖန်တီးပါ။</div>
     </div>
   </section>
 
-  <div class="admin-app" id="adminApp">
+  <div class="admin-shell" id="adminApp" hidden>
     <aside class="admin-sidebar" id="adminSidebar">
-      <div class="admin-brand"><span class="brand-mark">H</span><div><strong>Her Story</strong><small id="sidebarMode">Admin Studio</small></div></div>
-      <nav class="admin-nav" id="adminNav">
-        <button class="active" data-page="dashboard"><span>⌂</span> Dashboard</button>
-        <button data-page="books"><span>▤</span> စာအုပ်များ</button>
-        <button data-page="posts"><span>✎</span> နေ့စဉ်ဘလော့ဂ်</button>
-        <button data-page="quotes"><span>❝</span> Quotes</button>
-        <button data-page="settings"><span>⚙</span> Site Settings</button>
-        <button data-page="data"><span>⇄</span> Backup & Data</button>
+      <div class="admin-brand"><span class="brand-mark">H</span><div><strong>Author Studio</strong><small id="sidebarMode">LIVE MODE</small></div></div>
+      <nav class="admin-nav" aria-label="Admin navigation">
+        <button class="active" data-page="dashboard"><span class="nav-icon">⌂</span>Dashboard</button>
+        <button data-page="books"><span class="nav-icon">▤</span>Books</button>
+        <button data-page="posts"><span class="nav-icon">✎</span>Blogs</button>
+        <button data-page="quotes"><span class="nav-icon">❝</span>Quotes</button>
+        <button data-page="settings"><span class="nav-icon">⚙</span>Site Settings</button>
+        <button data-page="data"><span class="nav-icon">⇅</span>Backup & Setup</button>
       </nav>
-      <div class="admin-sidebar-bottom">
-        <a href="index.html" target="_blank">↗ Website Preview</a>
-        <button id="logoutButton">⇥ Log out</button>
+      <div class="admin-sidebar-footer">
+        <a href="index.html" target="_blank" rel="noopener">Website Preview ↗</a>
+        <button id="logoutButton" type="button">Logout</button>
       </div>
     </aside>
 
     <main class="admin-main">
       <header class="admin-topbar">
-        <button class="admin-menu-toggle" id="adminMenuToggle" aria-label="Open sidebar">☰</button>
-        <div><strong id="topbarTitle">Dashboard</strong><div class="help-text" id="topbarMode">Loading...</div></div>
-        <a class="btn btn-small btn-secondary" href="index.html" target="_blank">Website ကြည့်ရန် ↗</a>
+        <div class="admin-status"><button class="admin-menu-toggle" id="adminMenuToggle" aria-label="Open menu">☰</button><span class="status-dot"></span><span id="connectionText">Supabase ချိတ်ဆက်ထားသည်</span></div>
+        <div class="admin-status"><span id="adminUserEmail"></span></div>
       </header>
 
       <div class="admin-content">
         <section class="admin-page active" data-page-panel="dashboard">
-          <div class="admin-heading"><div><h1 class="admin-title">Dashboard</h1><p class="admin-subtitle">Website ရဲ့ content အားလုံးကို တစ်နေရာတည်းက စီမံပါ။</p></div></div>
+          <div class="admin-heading"><div><h1 class="admin-title">Dashboard</h1><p class="admin-subtitle">Visitor analytics နဲ့ အများဆုံးဖတ်ထားတဲ့စာတွေကို ကြည့်နိုင်ပါတယ်။</p></div><button class="btn btn-ghost btn-small" id="refreshAnalytics" type="button">Refresh</button></div>
           <div class="stats-grid">
-            <div class="stat-card"><span>စာအုပ်စုစုပေါင်း</span><strong id="bookCount">0</strong></div>
-            <div class="stat-card"><span>Published blogs</span><strong id="publishedCount">0</strong></div>
-            <div class="stat-card"><span>Draft blogs</span><strong id="draftCount">0</strong></div>
-            <div class="stat-card"><span>Quotes</span><strong id="quoteCount">0</strong></div>
+            <article class="stat-card"><span>Total page visits</span><strong id="totalVisits">0</strong></article>
+            <article class="stat-card"><span>Unique visitors</span><strong id="uniqueVisitors">0</strong></article>
+            <article class="stat-card"><span>Today's visits</span><strong id="todayVisits">0</strong></article>
+            <article class="stat-card active-stat"><span>Active now (5 min)</span><strong id="activeNow">0</strong></article>
+            <article class="stat-card"><span>Subscribers</span><strong id="subscriberCount">0</strong></article>
           </div>
-          <div class="dashboard-grid">
-            <div class="panel"><h3>နောက်ဆုံးတင်ထားသော Blog များ</h3><div class="activity-list" id="recentPosts"></div></div>
-            <div class="panel"><h3>Quick actions</h3><div class="quick-actions"><button class="btn btn-primary" data-new="post">＋ Blog အသစ်ရေးမယ်</button><button class="btn btn-secondary" data-new="book">＋ စာအုပ်အသစ်ထည့်မယ်</button><button class="btn btn-soft" data-page-jump="settings">စာရေးသူအချက်အလက် ပြင်မယ်</button></div></div>
+          <div class="admin-grid-2">
+            <article class="panel"><h3>Last 7 days</h3><div class="mini-chart" id="visitsChart"></div></article>
+            <article class="panel"><h3>Most-read blogs</h3><div class="rank-list" id="topPosts"></div></article>
+            <article class="panel"><h3>Most-read books</h3><div class="rank-list" id="topBooks"></div></article>
+            <article class="panel"><h3>Analytics note</h3><div class="notice">Page refresh တစ်ကြိမ်ကို visit တစ်ကြိမ်မှတ်ပါတယ်။ “Active now” က နောက်ဆုံး ၅ မိနစ်အတွင်း heartbeat ရှိတဲ့ browser session အရေအတွက်ပါ။</div></article>
           </div>
         </section>
 
         <section class="admin-page" data-page-panel="books">
-          <div class="admin-heading"><div><h1 class="admin-title">စာအုပ်များ</h1><p class="admin-subtitle">စာအုပ်အသစ်ထည့်ခြင်း၊ အဖုံးပြောင်းခြင်းနဲ့ ရောင်းချမှုအခြေအနေ သတ်မှတ်နိုင်ပါတယ်။</p></div><button class="btn btn-primary" data-new="book">＋ စာအုပ်အသစ်</button></div>
-          <div class="panel table-scroll"><table class="content-table"><thead><tr><th>Cover</th><th>စာအုပ်</th><th>Year</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead><tbody id="booksTable"></tbody></table></div>
+          <div class="admin-heading"><div><h1 class="admin-title">Books</h1><p class="admin-subtitle">ဈေးနှုန်း/FREE၊ online reader၊ PDF နဲ့ cover image ကိုစီမံပါ။</p></div><button class="btn btn-primary" id="addBookButton" type="button">+ စာအုပ်အသစ်</button></div>
+          <div class="content-list" id="booksList"></div>
         </section>
 
         <section class="admin-page" data-page-panel="posts">
-          <div class="admin-heading"><div><h1 class="admin-title">နေ့စဉ်ဘလော့ဂ်</h1><p class="admin-subtitle">နေ့စဉ်စာတွေကို Draft အဖြစ်သိမ်းထားနိုင်ပြီး အဆင်သင့်ဖြစ်မှ Publish လုပ်နိုင်ပါတယ်။</p></div><button class="btn btn-primary" data-new="post">＋ Blog အသစ်</button></div>
-          <div class="panel table-scroll"><table class="content-table"><thead><tr><th>Image</th><th>ခေါင်းစဉ်</th><th>Date</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead><tbody id="postsTable"></tbody></table></div>
+          <div class="admin-heading"><div><h1 class="admin-title">Blogs</h1><p class="admin-subtitle">Published လုပ်လိုက်တဲ့နောက် Public site မှာ NEWEST tag နဲ့ Realtime update ဖြစ်ပါမယ်။</p></div><button class="btn btn-primary" id="addPostButton" type="button">+ Blog အသစ်</button></div>
+          <div class="content-list" id="postsList"></div>
         </section>
 
         <section class="admin-page" data-page-panel="quotes">
-          <div class="admin-heading"><div><h1 class="admin-title">Quotes</h1><p class="admin-subtitle">Website UI မှာ အလှဆင်ပြသမယ့် Quotes လေးတွေ စီမံပါ။</p></div><button class="btn btn-primary" data-new="quote">＋ Quote အသစ်</button></div>
-          <div class="panel table-scroll"><table class="content-table"><thead><tr><th>Quote</th><th>Source</th><th>Order</th><th style="text-align:right">Actions</th></tr></thead><tbody id="quotesTable"></tbody></table></div>
+          <div class="admin-heading"><div><h1 class="admin-title">Quotes</h1><p class="admin-subtitle">Homepage မှာအလှဆင်ပြသမည့် Quote cards များ။</p></div><button class="btn btn-primary" id="addQuoteButton" type="button">+ Quote အသစ်</button></div>
+          <div class="content-list" id="quotesList"></div>
         </section>
 
         <section class="admin-page" data-page-panel="settings">
-          <div class="admin-heading"><div><h1 class="admin-title">Site Settings</h1><p class="admin-subtitle">စာရေးဆရာမပုံ၊ အမည်၊ Bio နဲ့ ပင်မစာသားတွေ ပြင်နိုင်ပါတယ်။</p></div></div>
-          <form class="panel" id="settingsForm">
+          <div class="admin-heading"><div><h1 class="admin-title">Site Settings</h1><p class="admin-subtitle">Intro ပုံနဲ့ About Author ပုံကို သီးခြားစီတင်နိုင်ပါတယ်။</p></div></div>
+          <form class="panel settings-form" id="settingsForm">
             <div class="form-grid">
-              <div class="field"><label for="siteTitle">Website title</label><input id="siteTitle" name="site_title" required></div>
-              <div class="field"><label for="authorName">စာရေးဆရာမအမည်</label><input id="authorName" name="author_name" required></div>
-              <div class="field full"><label for="authorRole">Role / subtitle</label><input id="authorRole" name="author_role" placeholder="စာရေးဆရာမ · ကဗျာဆရာမ"></div>
-              <div class="field full"><label for="tagline">Hero tagline</label><textarea id="tagline" name="tagline" rows="3"></textarea></div>
-              <div class="field full"><label for="authorBio">Bio</label><textarea id="authorBio" name="bio" rows="6"></textarea></div>
-              <div class="field full"><label for="heroQuoteSetting">Main quote</label><textarea id="heroQuoteSetting" name="hero_quote" rows="3"></textarea></div>
-              <div class="field"><label for="profileImage">စာရေးဆရာမပုံ URL / path</label><input id="profileImage" name="profile_image" placeholder="assets/author-portrait.svg"><p class="help-text">ပုံ URL paste လုပ်နိုင်သလို အောက်ကနေ upload လုပ်နိုင်ပါတယ်။</p></div>
-              <div class="field"><label for="profileUpload">ပုံ Upload</label><input id="profileUpload" type="file" accept="image/*"><img class="profile-preview" id="profilePreview" src="assets/author-portrait.svg" alt="Preview"></div>
-              <div class="field"><label for="instagram">Instagram link</label><input id="instagram" name="instagram"></div>
-              <div class="field"><label for="facebook">Facebook link</label><input id="facebook" name="facebook"></div>
+              <div class="field"><label for="siteTitle">Site title</label><input id="siteTitle" name="site_title" required></div>
+              <div class="field"><label for="authorName">Author name</label><input id="authorName" name="author_name" required></div>
+              <div class="field full"><label for="authorRole">Author role</label><input id="authorRole" name="author_role"></div>
+              <div class="field full"><label for="tagline">Intro tagline</label><textarea id="tagline" name="tagline"></textarea></div>
+              <div class="field full"><label for="heroQuote">Hero quote</label><textarea id="heroQuoteInput" name="hero_quote"></textarea></div>
+              <div class="field full"><label for="bio">About Author bio</label><textarea id="bio" name="bio" class="tall"></textarea></div>
+
+              <div class="field full upload-preview"><div><label for="heroImageUpload">First intro image</label><input id="heroImageUpload" type="file" accept="image/*"><small>မတင်ချင်ရင် လက်ရှိပုံကို ဆက်သုံးပါမယ်။</small><input id="heroImageUrl" name="hero_image" type="url" placeholder="https://... or assets/author-hero.svg"></div><img id="heroImagePreview" src="assets/author-hero.svg" alt="Hero preview"></div>
+              <div class="field full upload-preview"><div><label for="aboutImageUpload">About Author image</label><input id="aboutImageUpload" type="file" accept="image/*"><small>Intro ပုံနဲ့မတူတဲ့ ပုံတင်ပါ။</small><input id="aboutImageUrl" name="about_image" type="url" placeholder="https://... or assets/author-about.svg"></div><img id="aboutImagePreview" src="assets/author-about.svg" alt="About preview"></div>
+
+              <div class="field"><label for="facebook">Facebook link</label><input id="facebook" name="facebook" type="url" placeholder="https://facebook.com/..."></div>
+              <div class="field"><label for="tiktok">TikTok link</label><input id="tiktok" name="tiktok" type="url" placeholder="https://tiktok.com/@..."></div>
+              <div class="field"><label for="instagram">Instagram link</label><input id="instagram" name="instagram" type="url"></div>
+              <div class="field"><label for="telegram">Telegram link</label><input id="telegram" name="telegram" type="url"></div>
               <div class="field full"><label for="contactEmail">Contact email</label><input id="contactEmail" name="email" type="email"></div>
             </div>
             <div class="form-actions"><button class="btn btn-primary" type="submit">Settings သိမ်းမယ်</button></div>
@@ -103,13 +104,16 @@
         </section>
 
         <section class="admin-page" data-page-panel="data">
-          <div class="admin-heading"><div><h1 class="admin-title">Backup & Data</h1><p class="admin-subtitle">Demo Mode data ကို export/import လုပ်ပြီး backup သိမ်းထားနိုင်ပါတယ်။</p></div></div>
-          <div class="notice" id="dataModeNotice">Mode စစ်ဆေးနေပါတယ်…</div>
-          <div class="panel" style="margin-top:18px"><div class="data-actions">
-            <div class="data-card"><h4>Export backup</h4><p>လက်ရှိ books, posts, quotes နဲ့ settings အားလုံးကို JSON ဖိုင်အဖြစ် ဒေါင်းပါ။</p><button class="btn btn-secondary btn-small" id="exportButton">Export JSON</button></div>
-            <div class="data-card"><h4>Import backup</h4><p>ယခင် export လုပ်ထားတဲ့ JSON ဖိုင်ကနေ data ပြန်သွင်းပါ။</p><label class="btn btn-secondary btn-small" for="importFile">Import JSON</label><input class="sr-only" id="importFile" type="file" accept="application/json"></div>
-            <div class="data-card"><h4>Reset demo</h4><p>လက်ရှိ Demo Mode data အားလုံးကို sample content နဲ့ ပြန်စပါမယ်။</p><button class="btn btn-danger btn-small" id="resetButton">Reset Data</button></div>
-          </div></div>
+          <div class="admin-heading"><div><h1 class="admin-title">Backup & Setup</h1><p class="admin-subtitle">Supabase setup status နဲ့ Demo backup tools။</p></div></div>
+          <div class="notice" id="dataModeNotice">Mode စစ်နေသည်…</div>
+          <div class="panel" style="margin-top:18px">
+            <div class="data-actions">
+              <div class="data-card"><h4>Supabase SQL</h4><p>`schema.sql` ကို Supabase SQL Editor မှာ run လုပ်ပြီး Storage, analytics နဲ့ RLS tables ဖန်တီးပါ။</p><a class="btn btn-secondary btn-small" href="schema.sql" target="_blank">schema.sql ဖွင့်မယ်</a></div>
+              <div class="data-card"><h4>Export demo backup</h4><p>Local Demo Mode ဖြစ်မှ JSON backup ကိုအသုံးပြုနိုင်ပါတယ်။</p><button class="btn btn-secondary btn-small" id="exportButton" type="button">Export JSON</button></div>
+              <div class="data-card"><h4>Import demo backup</h4><p>ယခင် export JSON ကို browser ထဲ ပြန်သွင်းပါ။</p><label class="btn btn-secondary btn-small" for="importFile">Import JSON</label><input class="sr-only" id="importFile" type="file" accept="application/json"></div>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:18px"><h3>Admin user မရှိသေးရင်</h3><p>Supabase Dashboard → Authentication → Users → Add user မှာ admin email/password ဖန်တီးပါ။ Public website မှာ signup button မထားပါ။</p></div>
         </section>
       </div>
     </main>
@@ -117,13 +121,13 @@
 
   <div class="drawer" id="editorDrawer" aria-hidden="true">
     <div class="drawer-backdrop" data-close-drawer></div>
-    <div class="drawer-panel">
-      <div class="drawer-header"><h2 id="drawerTitle">Edit content</h2><button class="drawer-close" data-close-drawer>×</button></div>
-      <div id="drawerContent"></div>
-    </div>
+    <section class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+      <div class="drawer-header"><h2 id="drawerTitle">Edit content</h2><button class="drawer-close" data-close-drawer aria-label="Close">×</button></div>
+      <div class="drawer-content" id="drawerContent"></div>
+    </section>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>

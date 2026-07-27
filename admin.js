@@ -1,286 +1,443 @@
 (() => {
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
-  const escapeHTML = value => String(value ?? "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+  const escapeHTML = value => String(value ?? "").replace(/[&<>'"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" }[c]));
   const today = () => new Date().toISOString().slice(0,10);
+  const safeImage = (value, fallback) => value || fallback;
   let data = null;
   let appMode = "local";
+  let currentUser = null;
 
   function showToast(message, error = false) {
     const toast = $("#toast");
     toast.textContent = message;
     toast.className = `toast show${error ? " error" : ""}`;
     clearTimeout(showToast.timer);
-    showToast.timer = setTimeout(() => toast.className = "toast", 3000);
+    showToast.timer = setTimeout(() => toast.className = "toast", 3200);
   }
 
-  function formatDate(date) {
-    try { return new Intl.DateTimeFormat("my-MM", { year:"numeric", month:"short", day:"numeric" }).format(new Date(`${date}T00:00:00`)); }
-    catch { return date || ""; }
+  function formatPrice(book) {
+    if (book.is_free) return "FREE";
+    if (book.price == null || book.price === "") return "No price";
+    return `${new Intl.NumberFormat("en-US", { maximumFractionDigits:2 }).format(Number(book.price))} ${book.currency || "MMK"}`;
   }
 
-  function statusClass(status) { return `status-${String(status || "available").toLowerCase().replace(/\s+/g,"-")}`; }
-
-  async function fileToDataURL(file, maxWidth = 1400, quality = .84) {
-    if (!file) return "";
-    if (file.size > 5 * 1024 * 1024) throw new Error("ပုံဖိုင်က 5MB ထက်ကြီးနေပါတယ်။");
-    const raw = await new Promise((resolve,reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
-    const image = await new Promise((resolve,reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = raw; });
-    const scale = Math.min(1, maxWidth / image.width);
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(image.width * scale); canvas.height = Math.round(image.height * scale);
-    canvas.getContext("2d").drawImage(image,0,0,canvas.width,canvas.height);
-    return canvas.toDataURL("image/jpeg", quality);
+  function setBusy(button, busy, text = "သိမ်းနေသည်…") {
+    if (!button) return;
+    if (busy) {
+      button.dataset.originalText = button.textContent;
+      button.textContent = text;
+      button.disabled = true;
+    } else {
+      button.textContent = button.dataset.originalText || button.textContent;
+      button.disabled = false;
+    }
   }
 
-  function switchPage(page) {
-    $$(".admin-nav button").forEach(btn => btn.classList.toggle("active", btn.dataset.page === page));
-    $$(".admin-page").forEach(panel => panel.classList.toggle("active", panel.dataset.pagePanel === page));
-    const active = $(`.admin-nav button[data-page="${page}"]`);
-    $("#topbarTitle").textContent = active ? active.textContent.trim() : "Admin";
-    $("#adminSidebar").classList.remove("open");
-  }
-
-  function openDrawer(title, html) {
+  function openDrawer(title, content) {
     $("#drawerTitle").textContent = title;
-    $("#drawerContent").innerHTML = html;
+    $("#drawerContent").innerHTML = content;
     $("#editorDrawer").classList.add("open");
-    $("#editorDrawer").setAttribute("aria-hidden","false");
+    $("#editorDrawer").setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
   }
 
   function closeDrawer() {
     $("#editorDrawer").classList.remove("open");
-    $("#editorDrawer").setAttribute("aria-hidden","true");
+    $("#editorDrawer").setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
   }
 
-  function renderDashboard() {
-    $("#bookCount").textContent = data.books.length;
-    $("#publishedCount").textContent = data.posts.filter(p => p.status === "published").length;
-    $("#draftCount").textContent = data.posts.filter(p => p.status === "draft").length;
-    $("#quoteCount").textContent = data.quotes.length;
-    const recent = [...data.posts].sort((a,b) => String(b.post_date).localeCompare(String(a.post_date))).slice(0,5);
-    $("#recentPosts").innerHTML = recent.length ? recent.map(post => `<div class="activity-item"><div><p>${escapeHTML(post.title)}</p><small>${escapeHTML(formatDate(post.post_date))}</small></div><span class="status-pill ${post.status === "published" ? "status-available" : "status-pre-order"}">${escapeHTML(post.status)}</span></div>`).join("") : `<p class="help-text">Blog မရှိသေးပါ။</p>`;
+  function setPage(page) {
+    $$('[data-page]').forEach(button => button.classList.toggle("active", button.dataset.page === page));
+    $$('[data-page-panel]').forEach(panel => panel.classList.toggle("active", panel.dataset.pagePanel === page));
+    $("#adminSidebar").classList.remove("open");
+    if (page === "dashboard") loadAnalytics();
+  }
+
+  function renderAll() {
+    renderBooks();
+    renderPosts();
+    renderQuotes();
+    populateSettings();
+    updateDataModeNotice();
   }
 
   function renderBooks() {
-    const books = [...data.books].sort((a,b) => (a.display_order || 0) - (b.display_order || 0));
-    $("#booksTable").innerHTML = books.length ? books.map(book => `<tr>
-      <td><img class="table-cover" src="${escapeHTML(book.cover_image || "assets/book-1.svg")}" alt=""></td>
-      <td><div class="table-title">${escapeHTML(book.title)}</div><div class="table-sub">${escapeHTML(book.subtitle || "")}</div></td>
-      <td>${escapeHTML(book.published_year || "—")}</td>
-      <td><span class="status-pill ${statusClass(book.status)}">${escapeHTML(book.status)}</span></td>
-      <td><div class="row-actions"><button class="icon-btn" data-edit-book="${escapeHTML(book.id)}" title="Edit">✎</button><button class="icon-btn danger" data-delete-book="${escapeHTML(book.id)}" title="Delete">⌫</button></div></td>
-    </tr>`).join("") : `<tr><td colspan="5">စာအုပ်မရှိသေးပါ။</td></tr>`;
-    $$('[data-edit-book]').forEach(btn => btn.addEventListener('click', () => editBook(btn.dataset.editBook)));
-    $$('[data-delete-book]').forEach(btn => btn.addEventListener('click', () => removeBook(btn.dataset.deleteBook)));
+    const list = $("#booksList");
+    const books = [...(data?.books || [])].sort((a,b) => (a.display_order || 0) - (b.display_order || 0));
+    list.innerHTML = books.length ? books.map(book => `
+      <article class="content-row">
+        <div class="content-thumb"><img src="${escapeHTML(safeImage(book.cover_image,"assets/book-1.svg"))}" alt=""></div>
+        <div class="content-info"><h4>${escapeHTML(book.title)}</h4><p>${escapeHTML(book.category || "စာအုပ်")} · ${escapeHTML(formatPrice(book))} · ${escapeHTML(book.status || "Available")}</p></div>
+        <div class="row-actions">
+          <button class="icon-button" type="button" data-edit-book="${escapeHTML(book.id)}" aria-label="Edit">✎</button>
+          <button class="icon-button danger" type="button" data-delete-book="${escapeHTML(book.id)}" aria-label="Delete">⌫</button>
+        </div>
+      </article>`).join("") : '<div class="empty-state">စာအုပ်မရှိသေးပါ။</div>';
+    $$('[data-edit-book]').forEach(button => button.addEventListener("click", () => openBookEditor(books.find(item => String(item.id) === button.dataset.editBook))));
+    $$('[data-delete-book]').forEach(button => button.addEventListener("click", () => openDeleteConfirm("book", books.find(item => String(item.id) === button.dataset.deleteBook))));
   }
 
   function renderPosts() {
-    const posts = [...data.posts].sort((a,b) => String(b.post_date).localeCompare(String(a.post_date)));
-    $("#postsTable").innerHTML = posts.length ? posts.map(post => `<tr>
-      <td><img class="table-thumb" src="${escapeHTML(post.image || "assets/blog-1.svg")}" alt=""></td>
-      <td><div class="table-title">${escapeHTML(post.title)}</div><div class="table-sub">${escapeHTML((post.excerpt || "").slice(0,80))}</div></td>
-      <td>${escapeHTML(formatDate(post.post_date))}</td>
-      <td><span class="status-pill ${post.status === "published" ? "status-available" : "status-pre-order"}">${escapeHTML(post.status)}</span></td>
-      <td><div class="row-actions"><button class="icon-btn" data-edit-post="${escapeHTML(post.id)}" title="Edit">✎</button><button class="icon-btn danger" data-delete-post="${escapeHTML(post.id)}" title="Delete">⌫</button></div></td>
-    </tr>`).join("") : `<tr><td colspan="5">Blog မရှိသေးပါ။</td></tr>`;
-    $$('[data-edit-post]').forEach(btn => btn.addEventListener('click', () => editPost(btn.dataset.editPost)));
-    $$('[data-delete-post]').forEach(btn => btn.addEventListener('click', () => removePost(btn.dataset.deletePost)));
+    const posts = [...(data?.posts || [])].sort((a,b) => `${b.post_date || ""}${b.created_at || ""}`.localeCompare(`${a.post_date || ""}${a.created_at || ""}`));
+    $("#postsList").innerHTML = posts.length ? posts.map(post => `
+      <article class="content-row">
+        <div class="content-thumb wide"><img src="${escapeHTML(safeImage(post.image,"assets/blog-1.svg"))}" alt=""></div>
+        <div class="content-info"><h4>${escapeHTML(post.title)}</h4><p>${escapeHTML(post.post_date || "")} · ${escapeHTML(post.category || "Journal")} · ${escapeHTML(post.status || "draft")}</p></div>
+        <div class="row-actions">
+          <button class="icon-button" type="button" data-edit-post="${escapeHTML(post.id)}" aria-label="Edit">✎</button>
+          <button class="icon-button danger" type="button" data-delete-post="${escapeHTML(post.id)}" aria-label="Delete">⌫</button>
+        </div>
+      </article>`).join("") : '<div class="empty-state">Blog မရှိသေးပါ။</div>';
+    $$('[data-edit-post]').forEach(button => button.addEventListener("click", () => openPostEditor(posts.find(item => String(item.id) === button.dataset.editPost))));
+    $$('[data-delete-post]').forEach(button => button.addEventListener("click", () => openDeleteConfirm("post", posts.find(item => String(item.id) === button.dataset.deletePost))));
   }
 
   function renderQuotes() {
-    const quotes = [...data.quotes].sort((a,b) => (a.display_order || 0) - (b.display_order || 0));
-    $("#quotesTable").innerHTML = quotes.length ? quotes.map(quote => `<tr>
-      <td><div class="table-title">“${escapeHTML(quote.quote_text)}”</div></td>
-      <td>${escapeHTML(quote.source || "—")}</td><td>${escapeHTML(quote.display_order || 0)}</td>
-      <td><div class="row-actions"><button class="icon-btn" data-edit-quote="${escapeHTML(quote.id)}">✎</button><button class="icon-btn danger" data-delete-quote="${escapeHTML(quote.id)}">⌫</button></div></td>
-    </tr>`).join("") : `<tr><td colspan="4">Quote မရှိသေးပါ။</td></tr>`;
-    $$('[data-edit-quote]').forEach(btn => btn.addEventListener('click', () => editQuote(btn.dataset.editQuote)));
-    $$('[data-delete-quote]').forEach(btn => btn.addEventListener('click', () => removeQuote(btn.dataset.deleteQuote)));
+    const quotes = [...(data?.quotes || [])].sort((a,b) => (a.display_order || 0) - (b.display_order || 0));
+    $("#quotesList").innerHTML = quotes.length ? quotes.map(quote => `
+      <article class="content-row">
+        <div class="content-thumb" style="display:grid;place-items:center;font-family:Georgia;font-size:2rem;color:#6d2837">“</div>
+        <div class="content-info"><h4>${escapeHTML(quote.quote_text)}</h4><p>${escapeHTML(quote.source || "No source")} · Order ${escapeHTML(quote.display_order || 0)}</p></div>
+        <div class="row-actions">
+          <button class="icon-button" type="button" data-edit-quote="${escapeHTML(quote.id)}" aria-label="Edit">✎</button>
+          <button class="icon-button danger" type="button" data-delete-quote="${escapeHTML(quote.id)}" aria-label="Delete">⌫</button>
+        </div>
+      </article>`).join("") : '<div class="empty-state">Quote မရှိသေးပါ။</div>';
+    $$('[data-edit-quote]').forEach(button => button.addEventListener("click", () => openQuoteEditor(quotes.find(item => String(item.id) === button.dataset.editQuote))));
+    $$('[data-delete-quote]').forEach(button => button.addEventListener("click", () => openDeleteConfirm("quote", quotes.find(item => String(item.id) === button.dataset.deleteQuote))));
   }
 
-  function renderSettings() {
-    const s = data.settings;
-    Object.entries(s).forEach(([key,value]) => {
-      const field = $(`#settingsForm [name="${key}"]`);
-      if (field) field.value = value ?? "";
+  function bookForm(book = {}) {
+    return `
+      <form class="editor-form" id="bookForm">
+        <input type="hidden" name="id" value="${escapeHTML(book.id || "")}">
+        <div class="form-grid">
+          <div class="field full"><label>စာအုပ်အမည်</label><input name="title" value="${escapeHTML(book.title || "")}" required></div>
+          <div class="field"><label>Subtitle</label><input name="subtitle" value="${escapeHTML(book.subtitle || "")}"></div>
+          <div class="field"><label>Category</label><input name="category" value="${escapeHTML(book.category || "")}" placeholder="ဝတ္ထု / ကဗျာ / အက်ဆေး"></div>
+          <div class="field full"><label>Description</label><textarea name="description">${escapeHTML(book.description || "")}</textarea></div>
+          <div class="field"><label>Status</label><select name="status"><option ${book.status === "Available" ? "selected" : ""}>Available</option><option ${book.status === "Pre-order" ? "selected" : ""}>Pre-order</option><option ${book.status === "Sold Out" ? "selected" : ""}>Sold Out</option></select></div>
+          <div class="field"><label>Published year</label><input name="published_year" type="number" min="1900" max="2200" value="${escapeHTML(book.published_year || new Date().getFullYear())}"></div>
+          <div class="field"><label>Price</label><input name="price" type="number" min="0" step="0.01" value="${escapeHTML(book.price ?? "")}" placeholder="12000"></div>
+          <div class="field"><label>Currency</label><input name="currency" value="${escapeHTML(book.currency || "MMK")}" placeholder="MMK"></div>
+          <label class="check-field full"><input id="isFreeBook" name="is_free" type="checkbox" ${book.is_free ? "checked" : ""}><span>ဒီစာအုပ်ကို FREE အဖြစ်ပြမယ်</span></label>
+          <div class="field full" id="freeContentField"><label>Free online reading content</label><textarea class="tall" name="free_content" placeholder="Blog ပုံစံတန်းဖတ်မည့် စာအပြည့်အစုံ…">${escapeHTML(book.free_content || "")}</textarea><small>FREE စာအုပ်မှာ ဒီစာကို Website modal reader ထဲ တန်းဖတ်နိုင်ပါတယ်။</small></div>
+          <div class="field full"><label>Buy link</label><input name="buy_url" type="url" value="${escapeHTML(book.buy_url || "")}" placeholder="https://..."></div>
+          <div class="field full upload-preview"><div><label>Cover image upload</label><input id="bookCoverFile" type="file" accept="image/*"><input id="bookCoverUrl" name="cover_image" value="${escapeHTML(book.cover_image || "")}" placeholder="assets/book-1.svg or https://..."></div><img id="bookCoverPreview" src="${escapeHTML(safeImage(book.cover_image,"assets/book-1.svg"))}" alt="Cover preview"></div>
+          <div class="field full"><label>PDF upload</label><input id="bookPdfFile" type="file" accept="application/pdf"><small>Supabase Storage သို့ upload လုပ်ပြီး public PDF URL ကိုသိမ်းပါမယ်။ Max 50MB.</small></div>
+          <div class="field full"><label>PDF URL</label><input id="bookPdfUrl" name="pdf_url" type="url" value="${escapeHTML(book.pdf_url || "")}" placeholder="https://...pdf"></div>
+          <div class="field"><label>Display order</label><input name="display_order" type="number" value="${escapeHTML(book.display_order || 0)}"></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-secondary" type="button" data-close-drawer>Cancel</button><button class="btn btn-primary" type="submit">စာအုပ် သိမ်းမယ်</button></div>
+      </form>`;
+  }
+
+  function openBookEditor(book = null) {
+    openDrawer(book ? "စာအုပ်ပြင်မယ်" : "စာအုပ်အသစ်", bookForm(book || {}));
+    const form = $("#bookForm");
+    const toggleFree = () => {
+      $("#freeContentField").style.opacity = $("#isFreeBook").checked ? "1" : ".65";
+      form.elements.price.disabled = $("#isFreeBook").checked;
+    };
+    $("#isFreeBook").addEventListener("change", toggleFree);
+    toggleFree();
+    bindPreview("#bookCoverFile", "#bookCoverPreview");
+    form.addEventListener("submit", saveBookFromForm);
+    $$('[data-close-drawer]').forEach(el => el.addEventListener("click", closeDrawer));
+  }
+
+  async function saveBookFromForm(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector('[type="submit"]');
+    setBusy(button, true);
+    try {
+      const values = Object.fromEntries(new FormData(form).entries());
+      values.is_free = form.elements.is_free.checked;
+      const coverFile = $("#bookCoverFile").files[0];
+      const pdfFile = $("#bookPdfFile").files[0];
+      if (coverFile) values.cover_image = await AuthorStore.uploadAsset(coverFile, "book-covers");
+      if (pdfFile) values.pdf_url = await AuthorStore.uploadAsset(pdfFile, "book-pdfs");
+      await AuthorStore.saveBook(values);
+      await reloadData();
+      closeDrawer();
+      showToast("စာအုပ် သိမ်းပြီးပါပြီ။");
+    } catch (error) {
+      console.error(error);
+      showToast(error.message || "စာအုပ် သိမ်းမရပါ။", true);
+    } finally { setBusy(button, false); }
+  }
+
+  function postForm(post = {}) {
+    return `
+      <form class="editor-form" id="postForm">
+        <input type="hidden" name="id" value="${escapeHTML(post.id || "")}">
+        <div class="form-grid">
+          <div class="field full"><label>Blog ခေါင်းစဉ်</label><input name="title" value="${escapeHTML(post.title || "")}" required></div>
+          <div class="field"><label>Category</label><input name="category" value="${escapeHTML(post.category || "")}" placeholder="Writing"></div>
+          <div class="field"><label>Date</label><input name="post_date" type="date" value="${escapeHTML(post.post_date || today())}" required></div>
+          <div class="field"><label>Status</label><select name="status"><option value="draft" ${post.status !== "published" ? "selected" : ""}>Draft</option><option value="published" ${post.status === "published" ? "selected" : ""}>Published</option></select></div>
+          <div class="field full"><label>Excerpt</label><textarea name="excerpt">${escapeHTML(post.excerpt || "")}</textarea></div>
+          <div class="field full"><label>Blog စာအပြည့်အစုံ</label><textarea class="tall" name="content" required>${escapeHTML(post.content || "")}</textarea></div>
+          <div class="field full upload-preview"><div><label>Blog image upload</label><input id="postImageFile" type="file" accept="image/*"><input id="postImageUrl" name="image" value="${escapeHTML(post.image || "")}" placeholder="assets/blog-1.svg or https://..."></div><img id="postImagePreview" src="${escapeHTML(safeImage(post.image,"assets/blog-1.svg"))}" alt="Blog preview"></div>
+        </div>
+        <div class="notice">Published လုပ်တဲ့အချိန် Public site ဖွင့်ထားပြီး Notification ခွင့်ပြုထားတဲ့ user တွေကို Realtime browser notification ပြပါမယ်။</div>
+        <div class="form-actions"><button class="btn btn-secondary" type="button" data-close-drawer>Cancel</button><button class="btn btn-primary" type="submit">Blog သိမ်းမယ်</button></div>
+      </form>`;
+  }
+
+  function openPostEditor(post = null) {
+    openDrawer(post ? "Blog ပြင်မယ်" : "Blog အသစ်", postForm(post || {}));
+    bindPreview("#postImageFile", "#postImagePreview");
+    $("#postForm").addEventListener("submit", savePostFromForm);
+    $$('[data-close-drawer]').forEach(el => el.addEventListener("click", closeDrawer));
+  }
+
+  async function savePostFromForm(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector('[type="submit"]');
+    setBusy(button, true);
+    try {
+      const values = Object.fromEntries(new FormData(form).entries());
+      const imageFile = $("#postImageFile").files[0];
+      if (imageFile) values.image = await AuthorStore.uploadAsset(imageFile, "blog-images");
+      await AuthorStore.savePost(values);
+      await reloadData();
+      closeDrawer();
+      showToast(values.status === "published" ? "Blog publish လုပ်ပြီးပါပြီ။" : "Blog draft သိမ်းပြီးပါပြီ။");
+    } catch (error) {
+      console.error(error);
+      showToast(error.message || "Blog သိမ်းမရပါ။", true);
+    } finally { setBusy(button, false); }
+  }
+
+  function quoteForm(quote = {}) {
+    return `
+      <form class="editor-form" id="quoteForm">
+        <input type="hidden" name="id" value="${escapeHTML(quote.id || "")}">
+        <div class="field"><label>Quote</label><textarea class="tall" name="quote_text" required>${escapeHTML(quote.quote_text || "")}</textarea></div>
+        <div class="field"><label>Source / Book title</label><input name="source" value="${escapeHTML(quote.source || "")}"></div>
+        <div class="field"><label>Display order</label><input name="display_order" type="number" value="${escapeHTML(quote.display_order || 0)}"></div>
+        <div class="form-actions"><button class="btn btn-secondary" type="button" data-close-drawer>Cancel</button><button class="btn btn-primary" type="submit">Quote သိမ်းမယ်</button></div>
+      </form>`;
+  }
+
+  function openQuoteEditor(quote = null) {
+    openDrawer(quote ? "Quote ပြင်မယ်" : "Quote အသစ်", quoteForm(quote || {}));
+    $("#quoteForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const button = event.currentTarget.querySelector('[type="submit"]');
+      setBusy(button, true);
+      try {
+        await AuthorStore.saveQuote(Object.fromEntries(new FormData(event.currentTarget).entries()));
+        await reloadData();
+        closeDrawer();
+        showToast("Quote သိမ်းပြီးပါပြီ။");
+      } catch (error) { showToast(error.message || "Quote သိမ်းမရပါ။", true); }
+      finally { setBusy(button, false); }
     });
-    $("#profilePreview").src = s.profile_image || "assets/author-portrait.svg";
+    $$('[data-close-drawer]').forEach(el => el.addEventListener("click", closeDrawer));
   }
 
-  function renderAll() { renderDashboard(); renderBooks(); renderPosts(); renderQuotes(); renderSettings(); }
+  function openDeleteConfirm(type, item) {
+    if (!item) return;
+    const title = type === "quote" ? item.quote_text : item.title;
+    openDrawer("ဖျက်ရန်အတည်ပြုပါ", `
+      <div class="delete-confirm">
+        <strong>ဒီအချက်အလက်ကို ပြန်ယူလို့မရပါ။</strong>
+        <p>ဖျက်မည့်ခေါင်းစဉ်ကို အတိအကျရိုက်ပါ။</p>
+        <code>${escapeHTML(title)}</code>
+        <div class="field"><label>Confirmation</label><input id="deleteConfirmInput" autocomplete="off"></div>
+        <button class="btn btn-danger" id="confirmDeleteButton" type="button" disabled>အပြီးဖျက်မယ်</button>
+      </div>`);
+    const input = $("#deleteConfirmInput");
+    const button = $("#confirmDeleteButton");
+    input.addEventListener("input", () => button.disabled = input.value !== title);
+    button.addEventListener("click", async () => {
+      setBusy(button, true, "ဖျက်နေသည်…");
+      try {
+        if (type === "book") await AuthorStore.deleteBook(item.id);
+        else if (type === "post") await AuthorStore.deletePost(item.id);
+        else await AuthorStore.deleteQuote(item.id);
+        await reloadData();
+        closeDrawer();
+        showToast("ဖျက်ပြီးပါပြီ။");
+      } catch (error) { showToast(error.message || "ဖျက်မရပါ။", true); }
+      finally { setBusy(button, false); }
+    });
+  }
+
+  function bindPreview(inputSelector, imageSelector) {
+    const input = $(inputSelector);
+    const image = $(imageSelector);
+    input?.addEventListener("change", () => {
+      const file = input.files[0];
+      if (file) image.src = URL.createObjectURL(file);
+    });
+  }
+
+  function populateSettings() {
+    const s = data?.settings || {};
+    const form = $("#settingsForm");
+    ["site_title","author_name","author_role","tagline","hero_quote","bio","hero_image","about_image","facebook","tiktok","instagram","telegram","email"].forEach(name => {
+      if (form.elements[name]) form.elements[name].value = s[name] || "";
+    });
+    $("#heroImagePreview").src = safeImage(s.hero_image,"assets/author-hero.svg");
+    $("#aboutImagePreview").src = safeImage(s.about_image,"assets/author-about.svg");
+  }
+
+  async function saveSettings(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector('[type="submit"]');
+    setBusy(button, true);
+    try {
+      const values = Object.fromEntries(new FormData(form).entries());
+      const heroFile = $("#heroImageUpload").files[0];
+      const aboutFile = $("#aboutImageUpload").files[0];
+      if (heroFile) values.hero_image = await AuthorStore.uploadAsset(heroFile, "author-images");
+      if (aboutFile) values.about_image = await AuthorStore.uploadAsset(aboutFile, "author-images");
+      await AuthorStore.saveSettings(values);
+      await reloadData();
+      showToast("Website settings သိမ်းပြီးပါပြီ။");
+    } catch (error) {
+      console.error(error);
+      showToast(error.message || "Settings သိမ်းမရပါ။", true);
+    } finally { setBusy(button, false); }
+  }
+
+  function renderRankList(selector, items) {
+    const el = $(selector);
+    el.innerHTML = (items || []).length ? items.map((item,index) => `
+      <div class="rank-item"><span class="rank-number">${index + 1}</span><strong title="${escapeHTML(item.title)}">${escapeHTML(item.title)}</strong><span>${escapeHTML(item.views || 0)} views</span></div>
+    `).join("") : '<div class="notice">View data မရှိသေးပါ။</div>';
+  }
+
+  async function loadAnalytics() {
+    if (!data) return;
+    try {
+      const analytics = await AuthorStore.getAnalytics(data);
+      $("#totalVisits").textContent = Number(analytics.total_visits || 0).toLocaleString("en-US");
+      $("#uniqueVisitors").textContent = Number(analytics.unique_visitors || 0).toLocaleString("en-US");
+      $("#todayVisits").textContent = Number(analytics.today_visits || 0).toLocaleString("en-US");
+      $("#activeNow").textContent = Number(analytics.active_now || 0).toLocaleString("en-US");
+      $("#subscriberCount").textContent = Number(analytics.subscriber_count || 0).toLocaleString("en-US");
+      const days = analytics.last_7_days || [];
+      const max = Math.max(1, ...days.map(day => Number(day.visits || 0)));
+      $("#visitsChart").innerHTML = days.map(day => {
+        const height = Math.max(5, Math.round(Number(day.visits || 0) / max * 160));
+        const label = new Date(`${day.day}T12:00:00`).toLocaleDateString("en-US", { weekday:"short" });
+        return `<div class="chart-column" title="${escapeHTML(day.visits || 0)} visits"><div class="chart-bar" style="height:${height}px"></div><small>${escapeHTML(label)}</small></div>`;
+      }).join("");
+      renderRankList("#topPosts", analytics.top_posts);
+      renderRankList("#topBooks", analytics.top_books);
+    } catch (error) {
+      console.error(error);
+      showToast("Analytics ဖတ်မရပါ။ schema.sql ကို အပြည့် run ထားလား စစ်ပါ။", true);
+    }
+  }
+
+  function updateDataModeNotice() {
+    const notice = $("#dataModeNotice");
+    if (appMode === "supabase") {
+      notice.className = "notice";
+      notice.textContent = "LIVE Supabase Mode — data, uploads နဲ့ analytics တွေဟာ Supabase project ထဲမှာ သိမ်းပါမယ်။ JSON export/import buttons က Demo Mode အတွက်သာဖြစ်ပါတယ်။";
+      $("#exportButton").disabled = true;
+      $("#importFile").disabled = true;
+    } else {
+      notice.className = "notice error";
+      notice.textContent = "LOCAL Demo Mode — ဒီ browser ထဲမှာပဲ သိမ်းပါမယ်။ Live website အတွက် config.js + schema.sql ကိုအသုံးပြုပါ။";
+      $("#exportButton").disabled = false;
+      $("#importFile").disabled = false;
+    }
+  }
 
   async function reloadData() {
     data = await AuthorStore.getAdminData();
     renderAll();
+    await loadAnalytics();
   }
 
-  function bookForm(book = {}) {
-    return `<form id="bookForm">
-      <div class="form-grid">
-        <input type="hidden" name="id" value="${escapeHTML(book.id || "")}">
-        <div class="field full"><label>စာအုပ်အမည်</label><input name="title" required value="${escapeHTML(book.title || "")}"></div>
-        <div class="field full"><label>Subtitle / အမျိုးအစား</label><input name="subtitle" value="${escapeHTML(book.subtitle || "")}"></div>
-        <div class="field full"><label>အကြောင်းအရာ</label><textarea name="description" rows="6">${escapeHTML(book.description || "")}</textarea></div>
-        <div class="field"><label>Cover image URL / path</label><input id="bookCoverUrl" name="cover_image" value="${escapeHTML(book.cover_image || "assets/book-1.svg")}"></div>
-        <div class="field"><label>Cover upload</label><input id="bookCoverUpload" type="file" accept="image/*"><img class="image-preview" id="bookCoverPreview" src="${escapeHTML(book.cover_image || "assets/book-1.svg")}" alt="Preview"></div>
-        <div class="field"><label>ထုတ်ဝေသည့်နှစ်</label><input name="published_year" type="number" min="1900" max="2100" value="${escapeHTML(book.published_year || new Date().getFullYear())}"></div>
-        <div class="field"><label>Status</label><select name="status"><option${book.status === "Available" ? " selected" : ""}>Available</option><option${book.status === "Pre-order" ? " selected" : ""}>Pre-order</option><option${book.status === "Sold Out" ? " selected" : ""}>Sold Out</option></select></div>
-        <div class="field"><label>Display order</label><input name="display_order" type="number" value="${escapeHTML(book.display_order || data.books.length + 1)}"></div>
-        <div class="field"><label>Buy link</label><input name="buy_url" type="url" value="${escapeHTML(book.buy_url === "#" ? "" : book.buy_url || "")}" placeholder="https://..."></div>
-      </div>
-      <div class="form-actions"><button type="button" class="btn btn-secondary" data-close-drawer>မလုပ်တော့ပါ</button><button class="btn btn-primary" type="submit">စာအုပ် သိမ်းမယ်</button></div>
-    </form>`;
-  }
-
-  function editBook(id = "") {
-    const book = data.books.find(item => item.id === id) || {};
-    openDrawer(id ? "စာအုပ်ပြင်ရန်" : "စာအုပ်အသစ်ထည့်ရန်", bookForm(book));
-    const url = $("#bookCoverUrl"), upload = $("#bookCoverUpload"), preview = $("#bookCoverPreview");
-    url.addEventListener("input", () => preview.src = url.value || "assets/book-1.svg");
-    upload.addEventListener("change", async () => { try { const image = await fileToDataURL(upload.files[0], 900, .86); if (image) { url.value = image; preview.src = image; } } catch (e) { showToast(e.message,true); } });
-    $("#bookForm").addEventListener("submit", saveBookForm);
-    $$('[data-close-drawer]').forEach(el => el.addEventListener('click', closeDrawer));
-  }
-
-  async function saveBookForm(event) {
-    event.preventDefault();
-    const book = Object.fromEntries(new FormData(event.currentTarget));
-    try { await AuthorStore.saveBook(book); await reloadData(); closeDrawer(); showToast("စာအုပ်ကို သိမ်းပြီးပါပြီ။"); }
-    catch (error) { showToast(error.message || "Save မရပါ။",true); }
-  }
-
-  async function removeBook(id) {
-    const book = data.books.find(item => item.id === id); if (!book) return;
-    const typed = prompt(`မှားမဖျက်မိစေရန် စာအုပ်အမည်ကို အတိအကျ ရိုက်ပါ။\n\n${book.title}`);
-    if (typed !== book.title) { if (typed !== null) showToast("စာအုပ်အမည် မကိုက်ညီသဖြင့် မဖျက်ပါ။",true); return; }
-    try { await AuthorStore.deleteBook(id); await reloadData(); showToast("စာအုပ်ကို ဖျက်ပြီးပါပြီ။"); } catch (error) { showToast(error.message,true); }
-  }
-
-  function postForm(post = {}) {
-    return `<form id="postForm">
-      <div class="form-grid">
-        <input type="hidden" name="id" value="${escapeHTML(post.id || "")}">
-        <div class="field full"><label>Blog ခေါင်းစဉ်</label><input name="title" required value="${escapeHTML(post.title || "")}"></div>
-        <div class="field full"><label>အကျဉ်းချုပ်</label><textarea name="excerpt" rows="3">${escapeHTML(post.excerpt || "")}</textarea></div>
-        <div class="field full"><label>စာအပြည့်အစုံ</label><textarea name="content" rows="13" required>${escapeHTML(post.content || "")}</textarea></div>
-        <div class="field"><label>Cover image URL / path</label><input id="postImageUrl" name="image" value="${escapeHTML(post.image || "assets/blog-1.svg")}"></div>
-        <div class="field"><label>Image upload</label><input id="postImageUpload" type="file" accept="image/*"><img class="table-thumb" style="width:160px;height:95px" id="postImagePreview" src="${escapeHTML(post.image || "assets/blog-1.svg")}" alt="Preview"></div>
-        <div class="field"><label>တင်မည့်ရက်</label><input name="post_date" type="date" value="${escapeHTML(post.post_date || today())}"></div>
-        <div class="field"><label>Status</label><select name="status"><option value="draft"${post.status === "draft" ? " selected" : ""}>Draft</option><option value="published"${post.status === "published" || !post.status ? " selected" : ""}>Published</option></select></div>
-      </div>
-      <div class="form-actions"><button type="button" class="btn btn-secondary" data-close-drawer>မလုပ်တော့ပါ</button><button class="btn btn-primary" type="submit">Blog သိမ်းမယ်</button></div>
-    </form>`;
-  }
-
-  function editPost(id = "") {
-    const post = data.posts.find(item => item.id === id) || {};
-    openDrawer(id ? "Blog ပြင်ရန်" : "Blog အသစ်ရေးရန်", postForm(post));
-    const url = $("#postImageUrl"), upload = $("#postImageUpload"), preview = $("#postImagePreview");
-    url.addEventListener("input", () => preview.src = url.value || "assets/blog-1.svg");
-    upload.addEventListener("change", async () => { try { const image = await fileToDataURL(upload.files[0], 1400, .82); if (image) { url.value = image; preview.src = image; } } catch (e) { showToast(e.message,true); } });
-    $("#postForm").addEventListener("submit", savePostForm);
-    $$('[data-close-drawer]').forEach(el => el.addEventListener('click', closeDrawer));
-  }
-
-  async function savePostForm(event) {
-    event.preventDefault();
-    const post = Object.fromEntries(new FormData(event.currentTarget));
-    try { await AuthorStore.savePost(post); await reloadData(); closeDrawer(); showToast(post.status === "published" ? "Blog ကို Publish လုပ်ပြီးပါပြီ။" : "Draft သိမ်းပြီးပါပြီ။"); }
-    catch (error) { showToast(error.message || "Save မရပါ။",true); }
-  }
-
-  async function removePost(id) {
-    const post = data.posts.find(item => item.id === id); if (!post) return;
-    const typed = prompt(`မှားမဖျက်မိစေရန် Blog ခေါင်းစဉ်ကို အတိအကျ ရိုက်ပါ။\n\n${post.title}`);
-    if (typed !== post.title) { if (typed !== null) showToast("ခေါင်းစဉ် မကိုက်ညီသဖြင့် မဖျက်ပါ။",true); return; }
-    try { await AuthorStore.deletePost(id); await reloadData(); showToast("Blog ကို ဖျက်ပြီးပါပြီ။"); } catch (error) { showToast(error.message,true); }
-  }
-
-  function quoteForm(quote = {}) {
-    return `<form id="quoteForm"><div class="form-grid"><input type="hidden" name="id" value="${escapeHTML(quote.id || "")}"><div class="field full"><label>Quote စာသား</label><textarea name="quote_text" rows="6" required>${escapeHTML(quote.quote_text || "")}</textarea></div><div class="field"><label>Source / စာအုပ်အမည်</label><input name="source" value="${escapeHTML(quote.source || "")}"></div><div class="field"><label>Display order</label><input name="display_order" type="number" value="${escapeHTML(quote.display_order || data.quotes.length + 1)}"></div></div><div class="form-actions"><button type="button" class="btn btn-secondary" data-close-drawer>မလုပ်တော့ပါ</button><button class="btn btn-primary" type="submit">Quote သိမ်းမယ်</button></div></form>`;
-  }
-
-  function editQuote(id = "") {
-    const quote = data.quotes.find(item => item.id === id) || {};
-    openDrawer(id ? "Quote ပြင်ရန်" : "Quote အသစ်ထည့်ရန်", quoteForm(quote));
-    $("#quoteForm").addEventListener("submit", saveQuoteForm);
-    $$('[data-close-drawer]').forEach(el => el.addEventListener('click', closeDrawer));
-  }
-
-  async function saveQuoteForm(event) {
-    event.preventDefault();
-    try { await AuthorStore.saveQuote(Object.fromEntries(new FormData(event.currentTarget))); await reloadData(); closeDrawer(); showToast("Quote သိမ်းပြီးပါပြီ။"); }
-    catch (error) { showToast(error.message,true); }
-  }
-
-  async function removeQuote(id) {
-    const quote = data.quotes.find(item => item.id === id); if (!quote) return;
-    if (!confirm(`ဒီ Quote ကို ဖျက်မှာ သေချာပါသလား?\n\n“${quote.quote_text}”`)) return;
-    try { await AuthorStore.deleteQuote(id); await reloadData(); showToast("Quote ဖျက်ပြီးပါပြီ။"); } catch (error) { showToast(error.message,true); }
+  async function showAdmin(session) {
+    currentUser = session?.user || session?.session?.user || null;
+    $("#loginScreen").hidden = true;
+    $("#adminApp").hidden = false;
+    $("#sidebarMode").textContent = appMode === "supabase" ? "SUPABASE LIVE" : "LOCAL DEMO";
+    $("#connectionText").textContent = appMode === "supabase" ? "Supabase ချိတ်ဆက်ထားသည်" : "Demo Mode";
+    $("#adminUserEmail").textContent = currentUser?.email || "Demo admin";
+    try {
+      await reloadData();
+    } catch (error) {
+      console.error(error);
+      showToast("Admin data မဖတ်နိုင်ပါ။ Supabase မှာ schema.sql run ထားပြီး Auth user ဖန်တီးထားလား စစ်ပါ။", true);
+      setPage("data");
+    }
   }
 
   async function initialize() {
+    appMode = await AuthorStore.init();
+    $("#loginModeBadge").textContent = appMode === "supabase" ? "SUPABASE LIVE MODE" : "LOCAL DEMO MODE";
+    if (appMode === "local") {
+      $("#emailField").hidden = true;
+      $("#passwordLabel").textContent = "Demo PIN";
+      $("#loginHelp").textContent = `Demo PIN: ${(window.APP_CONFIG || {}).DEMO_ADMIN_PIN || "2468"}`;
+    }
     try {
-      appMode = await AuthorStore.init();
-      const live = appMode === "supabase";
-      $("#loginModeBadge").classList.toggle("live", live);
-      $("#loginModeBadge span:last-child").textContent = live ? "Supabase Live Mode" : "Browser Demo Mode";
-      $("#supabaseLoginFields").hidden = !live;
-      $("#demoLoginFields").hidden = live;
-      $("#sidebarMode").textContent = live ? "Supabase Live" : "Demo Mode";
-      $("#topbarMode").textContent = live ? "Changes publish to shared database" : "Changes save in this browser only";
-      $("#dataModeNotice").textContent = live ? "Supabase Live Mode ဖြစ်သောကြောင့် JSON import/reset ကို ပိတ်ထားပါတယ်။ Database backup ကို Supabase dashboard ကနေ ပြုလုပ်ပါ။" : "Demo Mode: ပြင်ဆင်မှုတွေက ဒီ browser/device ထဲမှာပဲ သိမ်းမယ်။ တခြားလူတွေ၊ တခြားဖုန်းတွေမှာ မမြင်ရပါ။ Live publish အတွက် README အတိုင်း Supabase ချိတ်ပါ။";
-      $("#exportButton").disabled = live; $("#importFile").disabled = live; $("#resetButton").disabled = live;
-      if (await AuthorStore.hasSession()) await showAdmin();
-    } catch (error) { showToast(error.message || "App စတင်၍မရပါ။",true); }
-  }
-
-  async function showAdmin() {
-    $("#loginScreen").style.display = "none";
-    $("#adminApp").classList.add("active");
-    await reloadData();
+      const session = await AuthorStore.getSession();
+      if (session || (appMode === "local" && sessionStorage.getItem("author-demo-admin") === "1")) await showAdmin(session);
+    } catch (error) { console.warn(error); }
   }
 
   $("#loginForm").addEventListener("submit", async event => {
     event.preventDefault();
+    const button = event.currentTarget.querySelector('[type="submit"]');
+    setBusy(button, true, "Login ဝင်နေသည်…");
     try {
-      await AuthorStore.signIn({ email:$("#adminEmail").value, password:$("#adminPassword").value, pin:$("#adminPin").value });
-      await showAdmin(); showToast("Admin dashboard သို့ ဝင်ပြီးပါပြီ။");
-    } catch (error) { showToast(error.message || "Login မအောင်မြင်ပါ။",true); }
+      const result = await AuthorStore.signIn($("#loginEmail").value.trim(), $("#loginPassword").value);
+      await showAdmin(result.session || result);
+    } catch (error) {
+      console.error(error);
+      showToast(error.message || "Login မအောင်မြင်ပါ။", true);
+    } finally { setBusy(button, false); }
   });
 
-  $$(".admin-nav button").forEach(btn => btn.addEventListener("click", () => switchPage(btn.dataset.page)));
-  $$('[data-page-jump]').forEach(btn => btn.addEventListener('click', () => switchPage(btn.dataset.pageJump)));
-  $$('[data-new="book"]').forEach(btn => btn.addEventListener('click', () => editBook()));
-  $$('[data-new="post"]').forEach(btn => btn.addEventListener('click', () => editPost()));
-  $$('[data-new="quote"]').forEach(btn => btn.addEventListener('click', () => editQuote()));
-  $$('[data-close-drawer]').forEach(el => el.addEventListener('click', closeDrawer));
+  $("#logoutButton").addEventListener("click", async () => {
+    try { await AuthorStore.signOut(); location.reload(); }
+    catch (error) { showToast(error.message || "Logout မရပါ။", true); }
+  });
+  $$('[data-page]').forEach(button => button.addEventListener("click", () => setPage(button.dataset.page)));
   $("#adminMenuToggle").addEventListener("click", () => $("#adminSidebar").classList.toggle("open"));
-
-  $("#settingsForm").addEventListener("submit", async event => {
-    event.preventDefault();
-    try { await AuthorStore.saveSettings(Object.fromEntries(new FormData(event.currentTarget))); await reloadData(); showToast("Site settings သိမ်းပြီးပါပြီ။"); }
-    catch (error) { showToast(error.message || "Settings မသိမ်းနိုင်ပါ။",true); }
-  });
-  $("#profileImage").addEventListener("input", () => $("#profilePreview").src = $("#profileImage").value || "assets/author-portrait.svg");
-  $("#profileUpload").addEventListener("change", async () => { try { const image = await fileToDataURL($("#profileUpload").files[0], 1100, .85); if (image) { $("#profileImage").value = image; $("#profilePreview").src = image; } } catch (error) { showToast(error.message,true); } });
-
+  $("#addBookButton").addEventListener("click", () => openBookEditor());
+  $("#addPostButton").addEventListener("click", () => openPostEditor());
+  $("#addQuoteButton").addEventListener("click", () => openQuoteEditor());
+  $("#settingsForm").addEventListener("submit", saveSettings);
+  bindPreview("#heroImageUpload", "#heroImagePreview");
+  bindPreview("#aboutImageUpload", "#aboutImagePreview");
+  $("#refreshAnalytics").addEventListener("click", loadAnalytics);
+  $$('[data-close-drawer]').forEach(el => el.addEventListener("click", closeDrawer));
+  document.addEventListener("keydown", event => { if (event.key === "Escape") closeDrawer(); });
   $("#exportButton").addEventListener("click", () => {
-    try { const blob = new Blob([AuthorStore.exportLocalData()], {type:"application/json"}); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href=url; a.download=`author-studio-backup-${today()}.json`; a.click(); URL.revokeObjectURL(url); showToast("Backup export လုပ်ပြီးပါပြီ။"); } catch (error) { showToast(error.message,true); }
+    if (appMode !== "local") return;
+    const blob = new Blob([AuthorStore.exportLocal()], { type:"application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `author-studio-backup-${today()}.json`;
+    link.click();
+    URL.revokeObjectURL(link.href);
   });
   $("#importFile").addEventListener("change", async event => {
-    const file = event.target.files[0]; if (!file) return;
-    if (!confirm("Import လုပ်ရင် လက်ရှိ Demo data ကို အစားထိုးပါမယ်။ ဆက်လုပ်မလား?")) return;
-    try { AuthorStore.importLocalData(await file.text()); await reloadData(); showToast("Backup import လုပ်ပြီးပါပြီ။"); } catch (error) { showToast(error.message,true); } finally { event.target.value=""; }
+    const file = event.target.files[0];
+    if (!file || appMode !== "local") return;
+    try {
+      AuthorStore.importLocal(await file.text());
+      await reloadData();
+      showToast("Backup import ပြီးပါပြီ။");
+    } catch (error) { showToast(error.message || "Import မရပါ။", true); }
+    event.target.value = "";
   });
-  $("#resetButton").addEventListener("click", async () => {
-    const typed = prompt("Demo data အားလုံး reset လုပ်ရန် RESET လို့ ရိုက်ပါ။"); if (typed !== "RESET") return;
-    try { AuthorStore.resetLocalData(); await reloadData(); showToast("Demo data ကို reset လုပ်ပြီးပါပြီ။"); } catch (error) { showToast(error.message,true); }
-  });
-  $("#logoutButton").addEventListener("click", async () => { await AuthorStore.signOut(); location.reload(); });
-  document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
+
   initialize();
 })();

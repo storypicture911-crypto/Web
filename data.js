@@ -1,248 +1,547 @@
 (() => {
-  const STORAGE_KEY = "authorBookStudio.v2";
-  const config = window.APP_CONFIG || {};
-  let client = null;
-
+  const STORAGE_KEY = "shinhtatehtar-author-studio-v3";
+  const ANALYTICS_KEY = "shinhtatehtar-local-analytics-v1";
+  const cfg = window.APP_CONFIG || {};
+  const deepClone = value => JSON.parse(JSON.stringify(value));
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`);
-  const today = () => new Date().toISOString().slice(0, 10);
 
-  const DEFAULT_DATA = {
+  const defaultData = {
     settings: {
       id: 1,
       site_title: "Her Story Studio",
       author_name: "အိမ့်ချမ်းမြေ့",
       author_role: "စာရေးဆရာမ · ကဗျာဆရာမ",
       tagline: "စကားလုံးတွေက လူတစ်ယောက်ရဲ့ နေ့ရက်ကို ပြောင်းလဲပေးနိုင်တယ်။",
-      bio: "စာအုပ်၊ ကဗျာနဲ့ နေ့စဉ်ဘဝထဲက သေးသေးလေးတွေကို နူးညံ့တဲ့ စကားလုံးတွေနဲ့ ရေးသားသူပါ။ ဒီနေရာမှာ စာအုပ်အသစ်တွေ၊ စာရေးခြင်းနောက်ကွယ်က မှတ်တမ်းတွေနဲ့ နေ့စဉ်ဘလော့ဂ်တွေကို မျှဝေထားပါတယ်။",
+      bio: "စာအုပ်၊ ကဗျာနဲ့ နေ့စဉ်ဘဝထဲက သေးသေးလေးတွေကို နူးညံ့တဲ့ စကားလုံးတွေနဲ့ ရေးသားသူပါ။",
       hero_quote: "စာအုပ်တစ်အုပ်ဆိုတာ ကိုယ်မသွားဖူးသေးတဲ့ နေရာတစ်ခုရဲ့ တံခါးပါ။",
-      profile_image: "assets/author-portrait.svg",
+      hero_image: "assets/author-hero.svg",
+      about_image: "assets/author-about.svg",
       instagram: "#",
       facebook: "#",
+      tiktok: "#",
+      telegram: "#",
       email: "hello@example.com"
     },
     books: [
-      { id: uid(), title: "လမင်းဆီသို့ စာများ", subtitle: "အချစ်နှင့် မေတ္တာအကြောင်း ဝတ္ထု", description: "မပို့ဖြစ်ခဲ့တဲ့ စာတွေ၊ ပြန်မတွေ့နိုင်တော့တဲ့ လူတွေနဲ့ ကိုယ့်ကိုယ်ကို ပြန်ရှာတွေ့ရတဲ့ ညများအကြောင်း နူးညံ့တဲ့ ဝတ္ထုတစ်ပုဒ်။", cover_image: "assets/book-1.svg", status: "Available", buy_url: "#", published_year: 2026, display_order: 1 },
-      { id: uid(), title: "တိတ်ဆိတ်သော ဥယျာဉ်", subtitle: "ဝတ္ထုတိုစုစည်းမှု", description: "လူတွေရဲ့ မပြောဖြစ်တဲ့ စိတ်ကူးတွေကို ဥယျာဉ်တစ်ခုလို ဖြည်းဖြည်းဖွင့်ပြထားတဲ့ ဝတ္ထုတိုများ။", cover_image: "assets/book-2.svg", status: "Available", buy_url: "#", published_year: 2025, display_order: 2 },
-      { id: uid(), title: "နေဝင်ချိန် လက်ဖက်ရည်", subtitle: "နေ့စဉ်ဘဝ အက်ဆေးများ", description: "အိမ်၊ ခရီး၊ မိုးညနှင့် လက်ဖက်ရည်တစ်ခွက်ကြားက သေးငယ်တဲ့ ပျော်ရွှင်မှုတွေကို စုစည်းထားတဲ့ အက်ဆေးစာအုပ်။", cover_image: "assets/book-3.svg", status: "Pre-order", buy_url: "#", published_year: 2026, display_order: 3 },
-      { id: uid(), title: "ကြယ်နှစ်လုံးကြား", subtitle: "ကဗျာစု", description: "ဝေးကွာခြင်း၊ စောင့်ဆိုင်းခြင်းနဲ့ ပြန်လည်စတင်ခြင်းအကြောင်း ကဗျာတိုများ။", cover_image: "assets/book-4.svg", status: "Sold Out", buy_url: "#", published_year: 2024, display_order: 4 }
+      {
+        id: "10000000-0000-4000-8000-000000000001",
+        title: "လမင်းဆီသို့ စာများ",
+        subtitle: "အချစ်နှင့် မေတ္တာအကြောင်း ဝတ္ထု",
+        category: "ဝတ္ထု",
+        description: "မပို့ဖြစ်ခဲ့တဲ့ စာတွေ၊ ပြန်မတွေ့နိုင်တော့တဲ့ လူတွေနဲ့ ကိုယ့်ကိုယ်ကို ပြန်ရှာတွေ့ရတဲ့ ညများအကြောင်း နူးညံ့တဲ့ ဝတ္ထုတစ်ပုဒ်။",
+        cover_image: "assets/book-1.svg",
+        status: "Available",
+        price: 12000,
+        currency: "MMK",
+        is_free: false,
+        free_content: "",
+        pdf_url: "",
+        buy_url: "#",
+        published_year: 2026,
+        display_order: 1
+      },
+      {
+        id: "10000000-0000-4000-8000-000000000002",
+        title: "တိတ်ဆိတ်သော ဥယျာဉ်",
+        subtitle: "ဝတ္ထုတိုစုစည်းမှု",
+        category: "ဝတ္ထုတို",
+        description: "လူတွေရဲ့ မပြောဖြစ်တဲ့ စိတ်ကူးတွေကို ဥယျာဉ်တစ်ခုလို ဖြည်းဖြည်းဖွင့်ပြထားတဲ့ ဝတ္ထုတိုများ။",
+        cover_image: "assets/book-2.svg",
+        status: "Available",
+        price: null,
+        currency: "MMK",
+        is_free: true,
+        free_content: "အခန်း (၁) — တိတ်ဆိတ်သော ဥယျာဉ်\n\nမနက်ခင်းရဲ့အလင်းဟာ ပြတင်းပေါက်ကနေ အေးအေးလေး ဝင်လာတယ်။ ဥယျာဉ်ထဲမှာ စကားမပြောတတ်တဲ့ ပန်းတွေက သူတို့နည်းသူတို့ဟန်နဲ့ နေ့သစ်ကို ကြိုဆိုနေကြတယ်။\n\nအခန်း (၂) — အိမ်ပြန်လမ်း\n\nအချိန်အတော်ကြာပြီးနောက် သူမဟာ မိမိရဲ့တိတ်ဆိတ်မှုကို ရန်သူမဟုတ်တော့ဘဲ အိမ်တစ်လုံးလို ပြန်သိလာခဲ့တယ်။",
+        pdf_url: "",
+        buy_url: "",
+        published_year: 2025,
+        display_order: 2
+      },
+      {
+        id: "10000000-0000-4000-8000-000000000003",
+        title: "နေဝင်ချိန် လက်ဖက်ရည်",
+        subtitle: "နေ့စဉ်ဘဝ အက်ဆေးများ",
+        category: "အက်ဆေး",
+        description: "အိမ်၊ ခရီး၊ မိုးညနှင့် လက်ဖက်ရည်တစ်ခွက်ကြားက သေးငယ်တဲ့ ပျော်ရွှင်မှုတွေကို စုစည်းထားတဲ့ အက်ဆေးစာအုပ်။",
+        cover_image: "assets/book-3.svg",
+        status: "Pre-order",
+        price: 15000,
+        currency: "MMK",
+        is_free: false,
+        free_content: "",
+        pdf_url: "",
+        buy_url: "#",
+        published_year: 2026,
+        display_order: 3
+      },
+      {
+        id: "10000000-0000-4000-8000-000000000004",
+        title: "ကြယ်နှစ်လုံးကြား",
+        subtitle: "ကဗျာစု",
+        category: "ကဗျာ",
+        description: "ဝေးကွာခြင်း၊ စောင့်ဆိုင်းခြင်းနဲ့ ပြန်လည်စတင်ခြင်းအကြောင်း ကဗျာတိုများ။",
+        cover_image: "assets/book-4.svg",
+        status: "Sold Out",
+        price: 9000,
+        currency: "MMK",
+        is_free: false,
+        free_content: "",
+        pdf_url: "",
+        buy_url: "",
+        published_year: 2024,
+        display_order: 4
+      }
     ],
     posts: [
-      { id: uid(), title: "စာရေးချင်စိတ်မရှိတဲ့နေ့မှာ ကျွန်မလုပ်တဲ့အရာ ၅ ခု", excerpt: "စာရေးသူတိုင်း ကြုံရတဲ့ တိတ်ဆိတ်တဲ့နေ့တွေကို ဖြတ်သန်းဖို့ လက်တွေ့အသုံးဝင်တဲ့ နည်းလမ်းလေးတွေ။", content: "စာရေးချင်စိတ်ဆိုတာ နေ့တိုင်း တစ်ပုံစံတည်း လာမနေပါဘူး။ တချို့နေ့တွေမှာ စကားလုံးတွေက လျင်မြန်စွာ လာတတ်ပြီး တချို့နေ့တွေမှာတော့ စာရွက်အလွတ်က မျက်နှာချင်းဆိုင်ထိုင်နေသလို ဖြစ်နေတတ်ပါတယ်။\n\nအဲဒီလိုနေ့တွေမှာ ကျွန်မက အရင်ဆုံး စာမရေးရမယ်လို့ ကိုယ့်ကိုယ်ကို ခဏခွင့်ပြုပါတယ်။ ပြီးတော့ လမ်းလျှောက်ခြင်း၊ စာအုပ်အနည်းငယ်ဖတ်ခြင်း၊ စကားလုံး ၁၀၀ ပဲ ရေးမယ်လို့ ရည်မှန်းခြင်း၊ အဟောင်းရေးထားတာတွေ ပြန်ဖတ်ခြင်းနဲ့ ပတ်ဝန်းကျင်ပြောင်းထိုင်ခြင်းတို့ကို လုပ်ပါတယ်။\n\nအရေးကြီးဆုံးက စာရေးခြင်းကို အပြစ်ပေးတဲ့အလုပ်မဖြစ်စေဘဲ ပြန်လာချင်စရာ နေရာတစ်ခုလို ထိန်းသိမ်းထားဖို့ပါ။", image: "assets/blog-1.svg", post_date: today(), status: "published" },
-      { id: uid(), title: "မိုးရွာတဲ့မြို့နဲ့ ဝတ္ထုအသစ်ရဲ့ ပထမစာမျက်နှာ", excerpt: "ဝတ္ထုတစ်ပုဒ်ရဲ့ ပထမဆုံးပုံရိပ်က ဘယ်လိုစတင်ခဲ့သလဲဆိုတဲ့ နောက်ကွယ်ကမှတ်တမ်း။", content: "ဒီဝတ္ထုရဲ့ ပထမစာမျက်နှာက မိုးရေထဲမှာ ရပ်နေတဲ့ ဘတ်စ်ကားမှတ်တိုင်တစ်ခုက စခဲ့ပါတယ်။ လူတိုင်းအိမ်ပြန်နေကြပေမယ့် ဇာတ်ကောင်တစ်ယောက်ကတော့ တစ်နေရာကို မသွားချင်သေးဘူး။\n\nအဲဒီစိတ်ခံစားချက်က ဇာတ်လမ်းတစ်ပုဒ်လုံးရဲ့ အသံဖြစ်လာခဲ့ပါတယ်။ တခါတလေ ဝတ္ထုတစ်ပုဒ်စဖို့ ပေါက်ကွဲသံကြီးမလိုပါဘူး။ မိုးရေတစ်စက်နဲ့ မပြန်ချင်သေးတဲ့ စိတ်တစ်ခုလောက်ပဲ လိုပါတယ်။", image: "assets/blog-2.svg", post_date: "2026-07-24", status: "published" },
-      { id: uid(), title: "ညအချိန် စာဖတ်ခြင်းရဲ့ အေးချမ်းမှု", excerpt: "ဖုန်းကို ခဏပိတ်ပြီး စာအုပ်တစ်အုပ်နဲ့ အချိန်ဖြုန်းရတဲ့ အဓိပ္ပါယ်။", content: "ညဘက်မှာ စာဖတ်တဲ့အခါ နေ့တစ်နေ့လုံးရဲ့ အသံတွေ ဖြည်းဖြည်းလျော့သွားပါတယ်။ စာမျက်နှာတစ်ရွက်ချင်းစီက အမြန်မလိုတဲ့ အချိန်တစ်ခုကို ပြန်ပေးတယ်။\n\nဖတ်ရင်းနဲ့ ကိုယ့်အတွေးကို ပြန်ကြားရတယ်။ မဖြေရှင်းရသေးတဲ့ မေးခွန်းတွေကို ခဏထားနိုင်တယ်။ ဒါကြောင့် ညအချိန် စာဖတ်ခြင်းက အလေ့အကျင့်တစ်ခုထက် ကိုယ့်ကိုယ်ကို ပြန်တွေ့တဲ့ အခမ်းအနားသေးသေးလေးတစ်ခုလို့ ကျွန်မထင်ပါတယ်။", image: "assets/blog-3.svg", post_date: "2026-07-20", status: "published" }
+      {
+        id: "20000000-0000-4000-8000-000000000001",
+        title: "စာရေးချင်စိတ်မရှိတဲ့နေ့မှာ ကျွန်မလုပ်တဲ့အရာ ၅ ခု",
+        category: "Writing",
+        excerpt: "စာရေးသူတိုင်း ကြုံရတဲ့ တိတ်ဆိတ်တဲ့နေ့တွေကို ဖြတ်သန်းဖို့ လက်တွေ့အသုံးဝင်တဲ့ နည်းလမ်းလေးတွေ။",
+        content: "စာရေးချင်စိတ်ဆိုတာ နေ့တိုင်း တစ်ပုံစံတည်း လာမနေပါဘူး။ စာရေးခြင်းကို အပြစ်ပေးတဲ့အလုပ်မဖြစ်စေဘဲ ပြန်လာချင်စရာ နေရာတစ်ခုလို ထိန်းသိမ်းထားဖို့ အရေးကြီးပါတယ်။\n\n၁။ စာအုပ်တစ်မျက်နှာပဲ ဖတ်တယ်။\n၂။ စာတစ်ကြောင်းပဲ ရေးတယ်။\n၃။ လမ်းလျှောက်ရင်း စိတ်ကူးကို အသံဖမ်းတယ်။\n၄။ စားပွဲကို သန့်ရှင်းတယ်။\n၅။ အနားယူခွင့်ပေးတယ်။",
+        image: "assets/blog-1.svg",
+        post_date: new Date().toISOString().slice(0, 10),
+        status: "published"
+      },
+      {
+        id: "20000000-0000-4000-8000-000000000002",
+        title: "မိုးရွာတဲ့မြို့နဲ့ ဝတ္ထုအသစ်ရဲ့ ပထမစာမျက်နှာ",
+        category: "Behind the scenes",
+        excerpt: "ဝတ္ထုတစ်ပုဒ်ရဲ့ ပထမဆုံးပုံရိပ်က ဘယ်လိုစတင်ခဲ့သလဲဆိုတဲ့ နောက်ကွယ်ကမှတ်တမ်း။",
+        content: "ဒီဝတ္ထုရဲ့ ပထမစာမျက်နှာက မိုးရေထဲမှာ ရပ်နေတဲ့ ဘတ်စ်ကားမှတ်တိုင်တစ်ခုက စခဲ့ပါတယ်။ စာတစ်ပုဒ်စတင်ဖို့ အဖြေတစ်ခုထက် မေးခွန်းတစ်ခုက ပိုလိုတတ်ပါတယ်။",
+        image: "assets/blog-2.svg",
+        post_date: new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10),
+        status: "published"
+      }
     ],
     quotes: [
-      { id: uid(), quote_text: "အိပ်မက်တစ်ခုကို စတင်ဖို့ အကောင်းဆုံးအချိန်က မနေ့ကပါ။ ဒုတိယအကောင်းဆုံးအချိန်က ဒီနေ့ပါ။", source: "Notebook No. 7", display_order: 1 },
-      { id: uid(), quote_text: "မပြောဖြစ်တဲ့ စကားလုံးတွေက တစ်ခါတလေ ဝတ္ထုတစ်ပုဒ်ဖြစ်လာတတ်တယ်။", source: "လမင်းဆီသို့ စာများ", display_order: 2 },
-      { id: uid(), quote_text: "နူးညံ့ခြင်းဟာ အားနည်းခြင်းမဟုတ်ဘူး။ လူသားဖြစ်ခြင်းရဲ့ သတ္တိတစ်မျိုးပါ။", source: "တိတ်ဆိတ်သော ဥယျာဉ်", display_order: 3 }
+      { id: "30000000-0000-4000-8000-000000000001", quote_text: "အိပ်မက်တစ်ခုကို စတင်ဖို့ အကောင်းဆုံးအချိန်က မနေ့ကပါ။ ဒုတိယအကောင်းဆုံးအချိန်က ဒီနေ့ပါ။", source: "Notebook No. 7", display_order: 1 },
+      { id: "30000000-0000-4000-8000-000000000002", quote_text: "မပြောဖြစ်တဲ့ စကားလုံးတွေက တစ်ခါတလေ ဝတ္ထုတစ်ပုဒ်ဖြစ်လာတတ်တယ်။", source: "လမင်းဆီသို့ စာများ", display_order: 2 },
+      { id: "30000000-0000-4000-8000-000000000003", quote_text: "နူးညံ့ခြင်းဟာ အားနည်းခြင်းမဟုတ်ဘူး။ လူသားဖြစ်ခြင်းရဲ့ သတ္တိတစ်မျိုးပါ။", source: "တိတ်ဆိတ်သော ဥယျာဉ်", display_order: 3 }
     ]
   };
 
-  const cloneDefaults = () => JSON.parse(JSON.stringify(DEFAULT_DATA));
+  let client = null;
+  let mode = "local";
 
-  function getLocalData() {
+  function localRead() {
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      if (saved?.settings && Array.isArray(saved.books) && Array.isArray(saved.posts)) return saved;
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) return JSON.parse(stored);
     } catch (error) {
-      console.warn("Could not read saved data", error);
+      console.warn("Local data read failed", error);
     }
-    const fresh = cloneDefaults();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
-    return fresh;
+    const initial = deepClone(defaultData);
+    localWrite(initial);
+    return initial;
   }
 
-  function setLocalData(data) {
+  function localWrite(data) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     window.dispatchEvent(new CustomEvent("author-data-changed"));
-    return data;
   }
 
-  function isSupabaseConfigured() {
-    return Boolean(config.SUPABASE_URL && config.SUPABASE_ANON_KEY && window.supabase);
+  function localAnalyticsRead() {
+    try { return JSON.parse(localStorage.getItem(ANALYTICS_KEY) || "null") || { pageViews: [], contentViews: [], subscribers: [] }; }
+    catch { return { pageViews: [], contentViews: [], subscribers: [] }; }
+  }
+
+  function localAnalyticsWrite(value) {
+    localStorage.setItem(ANALYTICS_KEY, JSON.stringify(value));
   }
 
   async function init() {
-    if (isSupabaseConfigured()) {
-      client = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
-      return "supabase";
+    const url = String(cfg.SUPABASE_URL || "").trim();
+    const key = String(cfg.SUPABASE_PUBLISHABLE_KEY || cfg.SUPABASE_ANON_KEY || "").trim();
+    if (url && key && window.supabase?.createClient) {
+      client = window.supabase.createClient(url, key, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+      });
+      mode = "supabase";
+    } else {
+      mode = "local";
+      localRead();
     }
-    getLocalData();
-    return "local";
+    return mode;
   }
 
-  const mode = () => (client ? "supabase" : "local");
+  function normalizeSettings(row) {
+    return { ...deepClone(defaultData.settings), ...(row || {}) };
+  }
 
   async function getPublicData() {
-    if (!client) {
-      const data = getLocalData();
-      return { ...data, posts: data.posts.filter(p => p.status === "published") };
+    if (mode === "local") {
+      const local = localRead();
+      return { ...deepClone(local), source: "local" };
     }
-    const [settingsRes, booksRes, postsRes, quotesRes] = await Promise.all([
-      client.from("site_settings").select("*").eq("id", 1).single(),
-      client.from("books").select("*").order("display_order", { ascending: true }).order("created_at", { ascending: false }),
-      client.from("posts").select("*").eq("status", "published").order("post_date", { ascending: false }),
-      client.from("quotes").select("*").order("display_order", { ascending: true })
-    ]);
-    const error = settingsRes.error || booksRes.error || postsRes.error || quotesRes.error;
-    if (error) throw error;
-    return {
-      settings: settingsRes.data,
-      books: booksRes.data || [],
-      posts: postsRes.data || [],
-      quotes: quotesRes.data || []
-    };
+
+    try {
+      const [settingsResult, booksResult, postsResult, quotesResult] = await Promise.all([
+        client.from("site_settings").select("*").eq("id", 1).maybeSingle(),
+        client.from("books").select("*").order("display_order", { ascending: true }),
+        client.from("posts").select("*").eq("status", "published").order("post_date", { ascending: false }).order("created_at", { ascending: false }),
+        client.from("quotes").select("*").order("display_order", { ascending: true })
+      ]);
+      for (const result of [settingsResult, booksResult, postsResult, quotesResult]) {
+        if (result.error) throw result.error;
+      }
+      return {
+        settings: normalizeSettings(settingsResult.data),
+        books: booksResult.data || [],
+        posts: postsResult.data || [],
+        quotes: quotesResult.data || [],
+        source: "supabase"
+      };
+    } catch (error) {
+      console.warn("Supabase data is not ready; using preview data.", error);
+      return { ...deepClone(defaultData), source: "fallback", loadError: error.message || String(error) };
+    }
   }
 
   async function getAdminData() {
-    if (!client) return getLocalData();
-    const [settingsRes, booksRes, postsRes, quotesRes] = await Promise.all([
-      client.from("site_settings").select("*").eq("id", 1).single(),
+    if (mode === "local") return { ...deepClone(localRead()), source: "local" };
+    const [settingsResult, booksResult, postsResult, quotesResult] = await Promise.all([
+      client.from("site_settings").select("*").eq("id", 1).maybeSingle(),
       client.from("books").select("*").order("display_order", { ascending: true }),
-      client.from("posts").select("*").order("post_date", { ascending: false }),
+      client.from("posts").select("*").order("post_date", { ascending: false }).order("created_at", { ascending: false }),
       client.from("quotes").select("*").order("display_order", { ascending: true })
     ]);
-    const error = settingsRes.error || booksRes.error || postsRes.error || quotesRes.error;
-    if (error) throw error;
-    return { settings: settingsRes.data, books: booksRes.data || [], posts: postsRes.data || [], quotes: quotesRes.data || [] };
+    for (const result of [settingsResult, booksResult, postsResult, quotesResult]) {
+      if (result.error) throw result.error;
+    }
+    return {
+      settings: normalizeSettings(settingsResult.data),
+      books: booksResult.data || [],
+      posts: postsResult.data || [],
+      quotes: quotesResult.data || [],
+      source: "supabase"
+    };
   }
 
-  async function signIn({ email, password, pin }) {
-    if (!client) {
-      if (String(pin) !== String(config.DEMO_ADMIN_PIN || "2468")) throw new Error("PIN မမှန်ပါ။");
-      sessionStorage.setItem("author-admin-demo", "1");
-      return { user: { email: "demo-admin" } };
+  async function getSession() {
+    if (mode === "local") return { user: { email: "demo@local" } };
+    const { data, error } = await client.auth.getSession();
+    if (error) throw error;
+    return data.session;
+  }
+
+  async function signIn(email, passwordOrPin) {
+    if (mode === "local") {
+      if (String(passwordOrPin) !== String(cfg.DEMO_ADMIN_PIN || "2468")) throw new Error("PIN မမှန်ပါ။");
+      sessionStorage.setItem("author-demo-admin", "1");
+      return { user: { email: "demo@local" } };
     }
-    const { data, error } = await client.auth.signInWithPassword({ email, password });
+    const { data, error } = await client.auth.signInWithPassword({ email, password: passwordOrPin });
     if (error) throw error;
     return data;
   }
 
   async function signOut() {
-    if (!client) {
-      sessionStorage.removeItem("author-admin-demo");
+    if (mode === "local") {
+      sessionStorage.removeItem("author-demo-admin");
       return;
     }
-    await client.auth.signOut();
+    const { error } = await client.auth.signOut();
+    if (error) throw error;
   }
 
-  async function hasSession() {
-    if (!client) return sessionStorage.getItem("author-admin-demo") === "1";
-    const { data } = await client.auth.getSession();
-    return Boolean(data.session);
-  }
-
-  async function saveSettings(settings) {
-    if (!client) {
-      const data = getLocalData();
-      data.settings = { ...data.settings, ...settings, id: 1 };
-      setLocalData(data);
-      return data.settings;
+  async function saveSettings(values) {
+    const payload = { ...values, id: 1 };
+    if (mode === "local") {
+      const local = localRead();
+      local.settings = { ...local.settings, ...payload };
+      localWrite(local);
+      return local.settings;
     }
-    const payload = { ...settings, id: 1, updated_at: new Date().toISOString() };
     const { data, error } = await client.from("site_settings").upsert(payload).select().single();
     if (error) throw error;
     return data;
   }
 
-  async function saveBook(book) {
-    const payload = { ...book, id: book.id || uid(), published_year: Number(book.published_year) || null, display_order: Number(book.display_order) || 0 };
-    if (!client) {
-      const data = getLocalData();
-      const index = data.books.findIndex(item => item.id === payload.id);
-      if (index >= 0) data.books[index] = payload; else data.books.push(payload);
-      setLocalData(data);
+  function cleanBook(values) {
+    return {
+      ...values,
+      price: values.is_free || values.price === "" || values.price == null ? null : Number(values.price),
+      is_free: Boolean(values.is_free),
+      published_year: values.published_year ? Number(values.published_year) : null,
+      display_order: Number(values.display_order || 0),
+      pdf_url: values.pdf_url || null,
+      buy_url: values.buy_url || null,
+      free_content: values.free_content || null
+    };
+  }
+
+  async function saveBook(values) {
+    const payload = cleanBook(values);
+    if (mode === "local") {
+      const local = localRead();
+      if (payload.id) {
+        const index = local.books.findIndex(item => item.id === payload.id);
+        if (index < 0) throw new Error("Book မတွေ့ပါ။");
+        local.books[index] = { ...local.books[index], ...payload };
+      } else {
+        payload.id = uid();
+        local.books.push(payload);
+      }
+      localWrite(local);
       return payload;
     }
-    const { data, error } = await client.from("books").upsert(payload).select().single();
+    const query = payload.id
+      ? client.from("books").update(payload).eq("id", payload.id)
+      : client.from("books").insert(payload);
+    const { data, error } = await query.select().single();
     if (error) throw error;
     return data;
   }
 
   async function deleteBook(id) {
-    if (!client) {
-      const data = getLocalData();
-      data.books = data.books.filter(item => item.id !== id);
-      setLocalData(data);
+    if (mode === "local") {
+      const local = localRead();
+      local.books = local.books.filter(item => item.id !== id);
+      localWrite(local);
       return;
     }
     const { error } = await client.from("books").delete().eq("id", id);
     if (error) throw error;
   }
 
-  async function savePost(post) {
-    const payload = { ...post, id: post.id || uid(), post_date: post.post_date || today() };
-    if (!client) {
-      const data = getLocalData();
-      const index = data.posts.findIndex(item => item.id === payload.id);
-      if (index >= 0) data.posts[index] = payload; else data.posts.unshift(payload);
-      setLocalData(data);
+  async function savePost(values) {
+    const payload = { ...values, post_date: values.post_date || new Date().toISOString().slice(0, 10) };
+    if (mode === "local") {
+      const local = localRead();
+      if (payload.id) {
+        const index = local.posts.findIndex(item => item.id === payload.id);
+        if (index < 0) throw new Error("Blog မတွေ့ပါ။");
+        local.posts[index] = { ...local.posts[index], ...payload };
+      } else {
+        payload.id = uid();
+        payload.created_at = new Date().toISOString();
+        local.posts.push(payload);
+      }
+      localWrite(local);
       return payload;
     }
-    const { data, error } = await client.from("posts").upsert(payload).select().single();
+    const query = payload.id
+      ? client.from("posts").update(payload).eq("id", payload.id)
+      : client.from("posts").insert(payload);
+    const { data, error } = await query.select().single();
     if (error) throw error;
     return data;
   }
 
   async function deletePost(id) {
-    if (!client) {
-      const data = getLocalData();
-      data.posts = data.posts.filter(item => item.id !== id);
-      setLocalData(data);
+    if (mode === "local") {
+      const local = localRead();
+      local.posts = local.posts.filter(item => item.id !== id);
+      localWrite(local);
       return;
     }
     const { error } = await client.from("posts").delete().eq("id", id);
     if (error) throw error;
   }
 
-  async function saveQuote(quote) {
-    const payload = { ...quote, id: quote.id || uid(), display_order: Number(quote.display_order) || 0 };
-    if (!client) {
-      const data = getLocalData();
-      const index = data.quotes.findIndex(item => item.id === payload.id);
-      if (index >= 0) data.quotes[index] = payload; else data.quotes.push(payload);
-      setLocalData(data);
+  async function saveQuote(values) {
+    const payload = { ...values, display_order: Number(values.display_order || 0) };
+    if (mode === "local") {
+      const local = localRead();
+      if (payload.id) {
+        const index = local.quotes.findIndex(item => item.id === payload.id);
+        if (index < 0) throw new Error("Quote မတွေ့ပါ။");
+        local.quotes[index] = { ...local.quotes[index], ...payload };
+      } else {
+        payload.id = uid();
+        local.quotes.push(payload);
+      }
+      localWrite(local);
       return payload;
     }
-    const { data, error } = await client.from("quotes").upsert(payload).select().single();
+    const query = payload.id
+      ? client.from("quotes").update(payload).eq("id", payload.id)
+      : client.from("quotes").insert(payload);
+    const { data, error } = await query.select().single();
     if (error) throw error;
     return data;
   }
 
   async function deleteQuote(id) {
-    if (!client) {
-      const data = getLocalData();
-      data.quotes = data.quotes.filter(item => item.id !== id);
-      setLocalData(data);
+    if (mode === "local") {
+      const local = localRead();
+      local.quotes = local.quotes.filter(item => item.id !== id);
+      localWrite(local);
       return;
     }
     const { error } = await client.from("quotes").delete().eq("id", id);
     if (error) throw error;
   }
 
-  function exportLocalData() {
-    return JSON.stringify(getLocalData(), null, 2);
+  async function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
-  function importLocalData(raw) {
-    if (client) throw new Error("Import is available in Demo Mode only.");
-    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-    if (!parsed?.settings || !Array.isArray(parsed.books) || !Array.isArray(parsed.posts) || !Array.isArray(parsed.quotes)) {
-      throw new Error("JSON ဖိုင်ပုံစံ မမှန်ပါ။");
+  async function uploadAsset(file, folder = "uploads") {
+    if (!file) return "";
+    if (mode === "local") {
+      if (file.size > 2_500_000) throw new Error("Demo Mode မှာ 2.5MB အောက်ဖိုင်ပဲ သုံးပါ။ Supabase Mode မှာ PDF ကြီးတွေတင်နိုင်ပါတယ်။");
+      return fileToDataUrl(file);
     }
-    setLocalData(parsed);
-    return parsed;
+    const safeName = file.name.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "file";
+    const path = `${folder}/${Date.now()}-${uid()}-${safeName}`;
+    const { error } = await client.storage.from(cfg.STORAGE_BUCKET || "site-assets").upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type || undefined
+    });
+    if (error) throw error;
+    const { data } = client.storage.from(cfg.STORAGE_BUCKET || "site-assets").getPublicUrl(path);
+    return data.publicUrl;
   }
 
-  function resetLocalData() {
-    if (client) throw new Error("Reset is available in Demo Mode only.");
-    return setLocalData(cloneDefaults());
+  async function trackVisit(sessionId, path, referrer = "") {
+    const now = new Date().toISOString();
+    if (mode === "local") {
+      const analytics = localAnalyticsRead();
+      analytics.pageViews.push({ session_id: sessionId, path, referrer, created_at: now });
+      analytics.pageViews = analytics.pageViews.slice(-5000);
+      localAnalyticsWrite(analytics);
+      return;
+    }
+    const [{ error: insertError }, { error: heartbeatError }] = await Promise.all([
+      client.from("page_views").insert({ session_id: sessionId, path, referrer: String(referrer || "").slice(0, 500) }),
+      client.rpc("touch_visitor_session", { p_session_id: sessionId, p_path: path })
+    ]);
+    if (insertError) console.warn("Page view tracking failed", insertError);
+    if (heartbeatError) console.warn("Visitor heartbeat failed", heartbeatError);
   }
 
-  window.AuthorStore = {
-    init, mode, getPublicData, getAdminData, signIn, signOut, hasSession,
-    saveSettings, saveBook, deleteBook, savePost, deletePost,
-    saveQuote, deleteQuote, exportLocalData, importLocalData, resetLocalData,
-    defaultData: cloneDefaults
-  };
+  async function heartbeat(sessionId, path) {
+    if (mode === "local") return;
+    const { error } = await client.rpc("touch_visitor_session", { p_session_id: sessionId, p_path: path });
+    if (error) console.warn("Heartbeat failed", error);
+  }
+
+  async function trackContentView(sessionId, contentType, contentId) {
+    if (!contentId) return;
+    if (mode === "local") {
+      const analytics = localAnalyticsRead();
+      analytics.contentViews.push({ session_id: sessionId, content_type: contentType, content_id: contentId, created_at: new Date().toISOString() });
+      analytics.contentViews = analytics.contentViews.slice(-5000);
+      localAnalyticsWrite(analytics);
+      return;
+    }
+    const { error } = await client.from("content_views").insert({ session_id: sessionId, content_type: contentType, content_id: contentId });
+    if (error) console.warn("Content view tracking failed", error);
+  }
+
+  async function subscribeReader(email, deviceId, permission) {
+    if (mode === "local") {
+      const analytics = localAnalyticsRead();
+      const key = email || deviceId;
+      const existing = analytics.subscribers.find(item => (item.email || item.device_id) === key);
+      const item = { email: email || null, device_id: deviceId || null, notification_permission: permission || "", updated_at: new Date().toISOString() };
+      if (existing) Object.assign(existing, item); else analytics.subscribers.push(item);
+      localAnalyticsWrite(analytics);
+      return;
+    }
+    const { error } = await client.rpc("subscribe_reader", {
+      p_email: email || null,
+      p_device_id: deviceId || null,
+      p_permission: permission || null
+    });
+    if (error) throw error;
+  }
+
+  function computeLocalAnalytics(data) {
+    const analytics = localAnalyticsRead();
+    const today = new Date().toISOString().slice(0, 10);
+    const countBy = (type, source) => {
+      const counts = new Map();
+      analytics.contentViews.filter(v => v.content_type === type).forEach(v => counts.set(v.content_id, (counts.get(v.content_id) || 0) + 1));
+      return [...source].map(item => ({ id: item.id, title: item.title, views: counts.get(item.id) || 0 })).sort((a,b) => b.views - a.views).slice(0,5);
+    };
+    const last7 = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(Date.now() - (6 - index) * 86400000).toISOString().slice(0,10);
+      return { day: date, visits: analytics.pageViews.filter(v => String(v.created_at).slice(0,10) === date).length };
+    });
+    return {
+      total_visits: analytics.pageViews.length,
+      unique_visitors: new Set(analytics.pageViews.map(v => v.session_id)).size,
+      today_visits: analytics.pageViews.filter(v => String(v.created_at).slice(0,10) === today).length,
+      active_now: 1,
+      subscriber_count: analytics.subscribers.length,
+      top_posts: countBy("post", data.posts),
+      top_books: countBy("book", data.books),
+      last_7_days: last7
+    };
+  }
+
+  async function getAnalytics(data) {
+    if (mode === "local") return computeLocalAnalytics(data || localRead());
+    const { data: analytics, error } = await client.rpc("get_admin_analytics");
+    if (error) throw error;
+    return analytics || {};
+  }
+
+  function subscribeToPublishedPosts(callback) {
+    if (mode !== "supabase") return () => {};
+    const channel = client
+      .channel(`published-posts-${uid()}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "posts" }, payload => {
+        if (payload.new?.status === "published") callback(payload.new);
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "posts" }, payload => {
+        if (payload.new?.status === "published" && payload.old?.status !== "published") callback(payload.new);
+      })
+      .subscribe();
+    return () => client.removeChannel(channel);
+  }
+
+  function exportLocal() {
+    return JSON.stringify(localRead(), null, 2);
+  }
+
+  function importLocal(jsonText) {
+    const parsed = JSON.parse(jsonText);
+    if (!parsed.settings || !Array.isArray(parsed.books) || !Array.isArray(parsed.posts) || !Array.isArray(parsed.quotes)) {
+      throw new Error("Backup JSON ပုံစံမမှန်ပါ။");
+    }
+    localWrite(parsed);
+  }
+
+  function resetLocal() {
+    localWrite(deepClone(defaultData));
+  }
+
+  window.AuthorStore = Object.freeze({
+    init,
+    getMode: () => mode,
+    getClient: () => client,
+    getPublicData,
+    getAdminData,
+    getSession,
+    signIn,
+    signOut,
+    saveSettings,
+    saveBook,
+    deleteBook,
+    savePost,
+    deletePost,
+    saveQuote,
+    deleteQuote,
+    uploadAsset,
+    trackVisit,
+    heartbeat,
+    trackContentView,
+    subscribeReader,
+    getAnalytics,
+    subscribeToPublishedPosts,
+    exportLocal,
+    importLocal,
+    resetLocal,
+    defaults: deepClone(defaultData)
+  });
 })();

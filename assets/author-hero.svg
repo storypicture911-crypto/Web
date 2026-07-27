@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d8c2aa"/><stop offset="1" stop-color="#879b8e"/></linearGradient>
+    <linearGradient id="dress" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7b2f3d"/><stop offset="1" stop-color="#3a1820"/></linearGradient>
+  </defs>
+  <rect width="800" height="1000" rx="45" fill="url(#bg)"/>
+  <circle cx="610" cy="190" r="120" fill="#f5e7ca" opacity=".72"/>
+  <path d="M0 790 C180 690 300 850 470 740 C620 640 720 710 800 660 V1000 H0Z" fill="#263e36" opacity=".9"/>
+  <ellipse cx="400" cy="765" rx="245" ry="205" fill="url(#dress)"/>
+  <ellipse cx="410" cy="410" rx="175" ry="215" fill="#e7bb99"/>
+  <path d="M245 410 C220 180 335 125 435 130 C570 138 620 245 580 470 C540 370 530 260 430 225 C340 255 300 330 245 410Z" fill="#221a19"/>
+  <path d="M235 390 C170 505 215 640 325 675 C255 590 285 470 320 395Z" fill="#211918"/>
+  <path d="M570 360 C660 485 620 650 510 690 C575 590 545 460 500 380Z" fill="#211918"/>
+  <ellipse cx="348" cy="420" rx="18" ry="11" fill="#3d2a25"/><ellipse cx="472" cy="420" rx="18" ry="11" fill="#3d2a25"/>
+  <path d="M366 520 Q410 548 455 514" fill="none" stroke="#a05454" stroke-width="10" stroke-linecap="round"/>
+  <path d="M265 748 Q400 650 545 760" fill="none" stroke="#d9b38c" stroke-width="18" opacity=".65"/>
+  <g fill="#f6ecd8" opacity=".8"><circle cx="120" cy="165" r="10"/><circle cx="155" cy="130" r="5"/><circle cx="690" cy="440" r="8"/><circle cx="712" cy="400" r="4"/></g>
+  <text x="58" y="930" font-family="Georgia,serif" font-size="32" fill="#fff" opacity=".75">Stories • Books • Quiet days</text>
+</svg>
