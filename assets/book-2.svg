@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900">
+<defs><linearGradient id="g" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#3d5f56"/><stop offset="1" stop-color="#172f2c"/></linearGradient></defs>
+<rect width="600" height="900" rx="28" fill="url(#g)"/>
+<circle cx="300" cy="448" r="166" fill="none" stroke="#d6b87d" stroke-width="3" opacity=".75"/><circle cx="300" cy="448" r="128" fill="none" stroke="#d6b87d" stroke-width="2" opacity=".55"/>
+<path d="M300 617 C255 529 183 475 138 382 C198 401 245 434 300 491 C354 434 402 401 462 382 C416 475 345 529 300 617Z" fill="#d6b87d" opacity=".85"/>
+<g fill="#f5edda"><text x="300" y="126" text-anchor="middle" font-family="serif" font-size="28" letter-spacing="7">STORIES</text><text x="300" y="250" text-anchor="middle" font-family="serif" font-size="67" font-weight="700">The Quiet</text><text x="300" y="325" text-anchor="middle" font-family="serif" font-size="67" font-weight="700">Garden</text><text x="300" y="815" text-anchor="middle" font-family="sans-serif" font-size="27" letter-spacing="4">EINT CHAN MYAE</text></g>
+</svg>

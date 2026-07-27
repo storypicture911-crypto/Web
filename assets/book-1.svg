@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900">
+<defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#6d263d"/><stop offset="1" stop-color="#2c1720"/></linearGradient></defs>
+<rect width="600" height="900" rx="28" fill="url(#g)"/><circle cx="463" cy="157" r="96" fill="#e5c38f" opacity=".92"/>
+<path d="M0 710 C145 605 260 680 370 604 C455 546 523 575 600 523 V900 H0Z" fill="#d9b98b" opacity=".25"/>
+<path d="M85 675 C195 610 251 575 327 448 C357 397 387 310 420 213" fill="none" stroke="#f6ead8" stroke-width="9" opacity=".7"/>
+<g fill="#f6ead8"><circle cx="94" cy="668" r="18"/><circle cx="176" cy="612" r="14"/><circle cx="274" cy="518" r="13"/></g>
+<text x="56" y="110" fill="#f7efe2" font-family="serif" font-size="30" letter-spacing="7">A NOVEL</text>
+<text x="56" y="260" fill="#fff9ef" font-family="serif" font-size="75" font-weight="700">Letters</text><text x="56" y="340" fill="#fff9ef" font-family="serif" font-size="75" font-weight="700">to the</text><text x="56" y="420" fill="#fff9ef" font-family="serif" font-size="75" font-weight="700">Moon</text>
+<text x="58" y="827" fill="#f7efe2" font-family="sans-serif" font-size="28" letter-spacing="4">EINT CHAN MYAE</text>
+</svg>

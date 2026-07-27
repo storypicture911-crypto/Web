@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900">
+<defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#d6aa73"/><stop offset="1" stop-color="#8c4d3f"/></linearGradient></defs>
+<rect width="600" height="900" rx="28" fill="url(#g)"/>
+<path d="M0 556 C112 490 230 541 340 466 C453 389 525 439 600 397 V900 H0Z" fill="#fff1da" opacity=".26"/>
+<path d="M105 620 C170 544 231 513 301 506 C367 500 436 526 500 587" fill="none" stroke="#fff7e9" stroke-width="18" stroke-linecap="round" opacity=".78"/>
+<path d="M119 672 C203 622 279 610 366 630 C414 641 453 660 491 690" fill="none" stroke="#fff7e9" stroke-width="7" stroke-linecap="round" opacity=".62"/>
+<g fill="#3e2522"><text x="52" y="106" font-family="serif" font-size="29" letter-spacing="6">ESSAYS</text><text x="52" y="248" font-family="serif" font-size="70" font-weight="700">Tea at</text><text x="52" y="325" font-family="serif" font-size="70" font-weight="700">Sunset</text><text x="54" y="824" font-family="sans-serif" font-size="27" letter-spacing="4">EINT CHAN MYAE</text></g>
+</svg>
