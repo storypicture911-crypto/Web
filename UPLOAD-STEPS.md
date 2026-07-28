@@ -1,8 +1,8 @@
-# GitHub မှာ v4 ကို Replace လုပ်နည်း
+# GitHub မှာ v4.1 ကို Replace လုပ်နည်း
 
 ## 1. ZIP ကို ကွန်ပျူတာမှာဖြည်ပါ
 
-`shinhtatehtar-author-studio-v4.zip` ကို Right-click → **Extract All / Unzip** လုပ်ပါ။
+`shinhtatehtar-author-studio-v4.1.zip` ကို Right-click → **Extract All / Unzip** လုပ်ပါ။
 
 ## 2. GitHub repository ကိုဖွင့်ပါ
 
@@ -68,3 +68,8 @@ Login card အောက်မှာ:
 ## မရသေးရင်
 
 `Supabase Connection စစ်မယ်` ကိုနှိပ်ပြီး ပြတဲ့စာသားကို Screenshot ရိုက်ပါ။ `favicon.ico 404` error မရှိတော့ပါ။
+
+
+## Cache မပြောင်းသေးရင်
+
+Upload/Commit ပြီးနောက် public URL ကို `?v=41` နှင့်ဖွင့်ပါ။ ဥပမာ `index.html?v=41` သို့မဟုတ် `admin.html?v=41`။

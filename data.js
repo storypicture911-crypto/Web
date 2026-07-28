@@ -29,19 +29,19 @@
   const defaultData = {
     settings: {
       id: 1,
-      site_title: "Her Story Studio",
-      author_name: "အိမ့်ချမ်းမြေ့",
-      author_role: "စာရေးဆရာမ · ကဗျာဆရာမ",
+      site_title: "Author Studio",
+      author_name: "စာရေးဆရာမ",
+      author_role: "စာရေးဆရာမ",
       tagline: "စကားလုံးတွေက လူတစ်ယောက်ရဲ့ နေ့ရက်ကို ပြောင်းလဲပေးနိုင်တယ်။",
       bio: "စာအုပ်၊ ကဗျာနဲ့ နေ့စဉ်ဘဝထဲက သေးသေးလေးတွေကို နူးညံ့တဲ့ စကားလုံးတွေနဲ့ ရေးသားသူပါ။",
       hero_quote: "စာအုပ်တစ်အုပ်ဆိုတာ ကိုယ်မသွားဖူးသေးတဲ့ နေရာတစ်ခုရဲ့ တံခါးပါ။",
       hero_image: "assets/author-hero.svg",
       about_image: "assets/author-about.svg",
-      instagram: "#",
-      facebook: "#",
-      tiktok: "#",
-      telegram: "#",
-      email: "hello@example.com"
+      instagram: "",
+      facebook: "",
+      tiktok: "",
+      telegram: "",
+      email: ""
     },
     books: [
       {

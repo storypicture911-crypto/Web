@@ -1,4 +1,4 @@
-# Shin Htate Htar Author Studio v4
+# Shin Htate Htar Author Studio v4.1
 
 GitHub Pages + Supabase အတွက် ပြင်ဆင်ထားသော စာရေးဆရာမ Website နှင့် Hidden Admin Dashboard ဖြစ်ပါတယ်။
 
@@ -45,3 +45,12 @@ Storage bucket: site-assets
 `schema.sql` ကို Run အောင်မြင်ပြီးသားဆိုရင် ပြန် Run လုပ်စရာမလိုပါ။ Tables/policies မရှိခြင်း သို့မဟုတ် setup ပြန်စစ်လိုခြင်းရှိမှ ပြန် Run ပါ။
 
 > `service_role` သို့မဟုတ် Supabase Secret Key ကို GitHub မှာ မထည့်ပါနဲ့။
+
+
+## v4.1 ပြင်ဆင်ချက်
+
+- Supabase live data မရောက်ခင် default author name ပြပြီးနောက် ပြောင်းသွားသည့် flash ကို loader ဖြင့်ဖယ်ရှားထားသည်။
+- Live data နှင့် critical author images တက်ပြီးမှ public page ကိုဖော်ပြသည်။
+- Admin session စစ်နေစဉ် Login form မတောက်ပေါ်တော့ပါ။
+- Login အောင်မြင်လျှင် email/password fields ကိုရှင်းပြီး Login screen ကိုချက်ချင်းဖျောက်သည်။
+- “Connection အောင်မြင်” နှင့် “Login အောင်မြင်” ကို မရှုပ်အောင် status စာသားခွဲထားသည်။

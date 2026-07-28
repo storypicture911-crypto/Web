@@ -373,10 +373,51 @@
     await loadAnalytics();
   }
 
+  function finishAdminBoot() {
+    document.body.classList.remove("admin-booting");
+    document.body.classList.add("admin-ready");
+    document.body.setAttribute("aria-busy", "false");
+    const loader = $("#adminLoader");
+    if (loader) setTimeout(() => loader.remove(), 320);
+  }
+
+  function showLoginScreen() {
+    const screen = $("#loginScreen");
+    const app = $("#adminApp");
+    if (app) {
+      app.hidden = true;
+      app.classList.remove("admin-visible");
+    }
+    if (screen) {
+      screen.hidden = false;
+      screen.style.removeProperty("display");
+      screen.setAttribute("aria-hidden", "false");
+    }
+    finishAdminBoot();
+  }
+
   async function showAdmin(session) {
     currentUser = session?.user || session?.session?.user || null;
-    $("#loginScreen").hidden = true;
-    $("#adminApp").hidden = false;
+
+    // Clear credentials before leaving the login view. This also prevents
+    // password-manager/autofill text from remaining visible during transition.
+    $("#loginForm")?.reset();
+    if ($("#loginEmail")) $("#loginEmail").value = "";
+    if ($("#loginPassword")) $("#loginPassword").value = "";
+
+    const screen = $("#loginScreen");
+    const app = $("#adminApp");
+    if (screen) {
+      screen.hidden = true;
+      screen.style.display = "none";
+      screen.setAttribute("aria-hidden", "true");
+    }
+    if (app) {
+      app.hidden = false;
+      app.classList.add("admin-visible");
+    }
+    finishAdminBoot();
+
     $("#sidebarMode").textContent = appMode === "supabase" ? "SUPABASE LIVE" : "LOCAL DEMO";
     $("#connectionText").textContent = appMode === "supabase" ? "Supabase ချိတ်ဆက်ထားသည်" : "Demo Mode";
     $("#adminUserEmail").textContent = currentUser?.email || "Demo admin";
@@ -408,16 +449,22 @@
         setLoginStatus("Local Demo Mode အဆင်သင့်ဖြစ်ပါပြီ။", "success");
       } else {
         const check = await AuthorStore.testConnection();
-        setLoginStatus(check.message, check.ok ? "success" : "error");
+        const message = check.ok
+          ? "Supabase အဆင်သင့်ဖြစ်ပါပြီ။ Admin ဝင်ရန် Email/Password ထည့်ပြီး Login ခလုတ်ကိုနှိပ်ပါ။"
+          : check.message;
+        setLoginStatus(message, check.ok ? "info" : "error");
       }
 
       const session = await AuthorStore.getSession();
       if (session || (appMode === "local" && sessionStorage.getItem("author-demo-admin") === "1")) {
         await showAdmin(session);
+        return;
       }
+      showLoginScreen();
     } catch (error) {
       console.error("Admin initialization failed", error);
       setLoginStatus(friendly(error), "error");
+      showLoginScreen();
     } finally {
       if (loginButton) loginButton.disabled = false;
     }
@@ -444,6 +491,9 @@
     setLoginStatus("Supabase Authentication ကို စစ်နေပါတယ်…", "loading");
     try {
       const result = await AuthorStore.signIn(email, password);
+      event.currentTarget.reset();
+      if ($("#loginEmail")) $("#loginEmail").value = "";
+      if ($("#loginPassword")) $("#loginPassword").value = "";
       setLoginStatus("Login အောင်မြင်ပါတယ်။ Dashboard ဖွင့်နေပါတယ်…", "success");
       await showAdmin(result.session || result);
     } catch (error) {
@@ -463,7 +513,10 @@
     try {
       if (!AuthorStore.getClient()) await AuthorStore.init();
       const result = await AuthorStore.testConnection();
-      setLoginStatus(result.message, result.ok ? "success" : "error");
+      const message = result.ok
+        ? "Supabase Connection အောင်မြင်ပါတယ်။ ဒါက Login ဝင်ပြီးပြီလို့ မဆိုလိုပါ။ Email/Password ထည့်ပြီး Login ခလုတ်ကိုနှိပ်ပါ။"
+        : result.message;
+      setLoginStatus(message, result.ok ? "success" : "error");
     } catch (error) {
       setLoginStatus(friendly(error), "error");
     } finally {

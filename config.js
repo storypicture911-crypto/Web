@@ -1,5 +1,5 @@
 /*
-  Shin Htate Htar Author Studio v4
+  Shin Htate Htar Author Studio v4.1
   Browser-safe Supabase configuration.
   IMPORTANT: Use only the publishable/anon key here. Never use service_role.
 */
@@ -9,6 +9,6 @@ window.APP_CONFIG = Object.freeze({
   STORAGE_BUCKET: "site-assets",
   DEMO_ADMIN_PIN: "2468",
   SITE_SLUG: "shinhtatehtar",
-  APP_VERSION: "4.0.0",
+  APP_VERSION: "4.1.0",
   REQUEST_TIMEOUT_MS: 12000
 });

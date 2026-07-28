@@ -322,7 +322,7 @@
     }
   }
 
-  function renderImmediatePreview() {
+  function renderFallbackPreview() {
     try {
       currentData = JSON.parse(JSON.stringify(AuthorStore.defaults));
       renderSettings(currentData.settings);
@@ -331,22 +331,49 @@
       renderPosts(currentData.posts || []);
       activateReveal();
     } catch (error) {
-      console.error("Immediate preview render failed", error);
+      console.error("Fallback preview render failed", error);
       document.querySelectorAll(".reveal").forEach(el => el.classList.add("visible"));
     }
   }
 
-  async function start() {
-    // Never leave the public page blank while a network request is pending.
-    renderImmediatePreview();
+  async function waitForCriticalImages() {
+    const images = [$("#heroPortrait"), $("#aboutPortrait")].filter(Boolean);
+    const tasks = images.map(image => {
+      if (image.complete) return Promise.resolve();
+      if (typeof image.decode === "function") return image.decode().catch(() => {});
+      return new Promise(resolve => {
+        image.addEventListener("load", resolve, { once:true });
+        image.addEventListener("error", resolve, { once:true });
+      });
+    });
+    await Promise.race([
+      Promise.all(tasks),
+      new Promise(resolve => setTimeout(resolve, 900))
+    ]);
+  }
 
+  function revealSite() {
+    document.body.classList.remove("site-booting");
+    document.body.classList.add("site-ready");
+    document.body.setAttribute("aria-busy", "false");
+    const loader = $("#siteLoader");
+    if (loader) setTimeout(() => loader.remove(), 320);
+  }
+
+  async function start() {
+    let rendered = false;
     try {
       await AuthorStore.init();
       await loadSite();
+      rendered = Boolean(currentData);
     } catch (error) {
       console.error("Site startup failed", error);
-      showToast(AuthorStore.friendlyError?.(error) || "Live data မဖတ်နိုင်သေးပါ။ Preview data ကိုပြထားပါတယ်။", true);
+      showToast(AuthorStore.friendlyError?.(error) || "Live data မဖတ်နိုင်သေးပါ။", true);
     }
+
+    if (!rendered) renderFallbackPreview();
+    await waitForCriticalImages();
+    revealSite();
 
     AuthorStore.trackVisit(sessionId, location.pathname, document.referrer).catch(error => console.warn("Visit tracking failed", error));
     setInterval(() => AuthorStore.heartbeat(sessionId, location.pathname).catch(error => console.warn("Heartbeat failed", error)), 60000);

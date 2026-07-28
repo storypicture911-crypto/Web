@@ -10,9 +10,17 @@
   <meta name="theme-color" content="#6d2837">
   <title>Her Story Studio</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 rx=%2218%22 fill=%22%236d2837%22/><text x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22white%22 font-family=%22Georgia%22>H</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=4.0.0">
+  <link rel="stylesheet" href="styles.css?v=4.1.0">
 </head>
-<body>
+<body class="site-booting" aria-busy="true">
+  <div class="site-loader" id="siteLoader" role="status" aria-live="polite">
+    <div class="site-loader-card">
+      <span class="loader-mark">H</span>
+      <span class="loader-line loader-line-wide"></span>
+      <span class="loader-line"></span>
+      <small>စာမျက်နှာ ပြင်ဆင်နေပါတယ်…</small>
+    </div>
+  </div>
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="#home" aria-label="Home">
@@ -138,8 +146,8 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="config.js?v=4.0.0"></script>
-  <script src="data.js?v=4.0.0"></script>
-  <script src="app.js?v=4.0.0"></script>
+  <script src="config.js?v=4.1.0"></script>
+  <script src="data.js?v=4.1.0"></script>
+  <script src="app.js?v=4.1.0"></script>
 </body>
 </html>
