@@ -22,6 +22,7 @@
     if (lower.includes("email not confirmed")) return "ဒီ email ကို Confirm မလုပ်ရသေးပါ။ Supabase Authentication → Users မှာ Confirm လုပ်ပါ။";
     if (lower.includes("failed to fetch") || lower.includes("networkerror") || lower.includes("load failed")) return "Supabase ကို ဆက်သွယ်မရပါ။ Internet၊ Project URL နဲ့ Publishable Key ကိုစစ်ပါ။";
     if (lower.includes("jwt") || lower.includes("api key") || lower.includes("apikey")) return "Supabase Publishable Key မမှန်နိုင်ပါ။ config.js ကိုစစ်ပါ။";
+    if (lower.includes("invalid input syntax for type uuid")) return "အသစ်ထည့်တဲ့အချက်အလက်ရဲ့ ID ကို အလွတ်စာသားအဖြစ် ပို့နေပါတယ်။ v4.1.2 ဖိုင်တွေကို GitHub မှာ replace လုပ်ပါ။";
     if (lower.includes("timeout")) return raw;
     return raw;
   }
@@ -345,9 +346,18 @@
     return data;
   }
 
+  function cleanOptionalUuid(values) {
+    const payload = { ...values };
+    const id = String(payload.id || "").trim();
+    if (id) payload.id = id;
+    else delete payload.id;
+    return payload;
+  }
+
   function cleanBook(values) {
+    const base = cleanOptionalUuid(values);
     return {
-      ...values,
+      ...base,
       price: values.is_free || values.price === "" || values.price == null ? null : Number(values.price),
       is_free: Boolean(values.is_free),
       published_year: values.published_year ? Number(values.published_year) : null,
@@ -393,7 +403,10 @@
   }
 
   async function savePost(values) {
-    const payload = { ...values, post_date: values.post_date || new Date().toISOString().slice(0, 10) };
+    const payload = cleanOptionalUuid({
+      ...values,
+      post_date: values.post_date || new Date().toISOString().slice(0, 10)
+    });
     if (mode === "local") {
       const local = localRead();
       if (payload.id) {
@@ -428,7 +441,10 @@
   }
 
   async function saveQuote(values) {
-    const payload = { ...values, display_order: Number(values.display_order || 0) };
+    const payload = cleanOptionalUuid({
+      ...values,
+      display_order: Number(values.display_order || 0)
+    });
     if (mode === "local") {
       const local = localRead();
       if (payload.id) {
