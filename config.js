@@ -9,6 +9,6 @@ window.APP_CONFIG = Object.freeze({
   STORAGE_BUCKET: "site-assets",
   DEMO_ADMIN_PIN: "2468",
   SITE_SLUG: "shinhtatehtar",
-  APP_VERSION: "4.1.0",
+  APP_VERSION: "4.1.1",
   REQUEST_TIMEOUT_MS: 12000
 });

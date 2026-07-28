@@ -47,7 +47,13 @@ Storage bucket: site-assets
 > `service_role` သို့မဟုတ် Supabase Secret Key ကို GitHub မှာ မထည့်ပါနဲ့။
 
 
-## v4.1 ပြင်ဆင်ချက်
+## v4.1.1 Login fix
+
+- Login အောင်မြင်ပြီးနောက် `Cannot read properties of null (reading 'reset')` ဖြစ်သည့် async form event bug ကို ပြင်ထားသည်။
+- Login အောင်မြင်လျှင် form fields ကိုရှင်းပြီး login screen ကိုဖျောက်ကာ dashboard သို့ တန်းဝင်သည်။
+- Newsletter form တွင်လည်း အလားတူ async reset bug ကို ပြင်ထားသည်။
+
+## v4.1.1 ပြင်ဆင်ချက်
 
 - Supabase live data မရောက်ခင် default author name ပြပြီးနောက် ပြောင်းသွားသည့် flash ကို loader ဖြင့်ဖယ်ရှားထားသည်။
 - Live data နှင့် critical author images တက်ပြီးမှ public page ကိုဖော်ပြသည်။

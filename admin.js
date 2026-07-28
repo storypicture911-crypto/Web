@@ -472,7 +472,10 @@
 
   $("#loginForm").addEventListener("submit", async event => {
     event.preventDefault();
-    const button = $("#loginButton") || event.currentTarget.querySelector('[type="submit"]');
+    // Keep a stable form reference before the first await. In browser events,
+    // event.currentTarget becomes null after asynchronous work completes.
+    const form = event.currentTarget;
+    const button = $("#loginButton") || form.querySelector('[type="submit"]');
     const email = $("#loginEmail")?.value.trim() || "";
     const password = $("#loginPassword")?.value || "";
 
@@ -491,7 +494,7 @@
     setLoginStatus("Supabase Authentication ကို စစ်နေပါတယ်…", "loading");
     try {
       const result = await AuthorStore.signIn(email, password);
-      event.currentTarget.reset();
+      form.reset();
       if ($("#loginEmail")) $("#loginEmail").value = "";
       if ($("#loginPassword")) $("#loginPassword").value = "";
       setLoginStatus("Login အောင်မြင်ပါတယ်။ Dashboard ဖွင့်နေပါတယ်…", "success");

@@ -399,11 +399,12 @@
     $("#notificationButton")?.addEventListener("click", enableNotifications);
     $("#newsletterForm")?.addEventListener("submit", async event => {
       event.preventDefault();
+      const form = event.currentTarget;
       const input = $("#newsletterEmail");
       try {
         await AuthorStore.subscribeReader(input?.value.trim(), getDeviceId(), ("Notification" in window ? Notification.permission : "unsupported"));
         showToast("Email စာရင်းသွင်းပြီးပါပြီ။");
-        event.currentTarget.reset();
+        form.reset();
       } catch (error) {
         showToast(AuthorStore.friendlyError?.(error) || error.message || "Subscribe လုပ်မရပါ။", true);
       }
